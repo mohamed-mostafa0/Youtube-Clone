@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Header from "../../components/Header";
-import Sidebar from "../../components/Sidebar";
 import VideoCard from "../../components/VideoCard";
 import { videos } from "../../data/mockData";
 import { MdCheckCircle } from "react-icons/md";
@@ -11,12 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getUserChannel } from "../api/services/channelServices";
 
 export default function ChannelPage() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState("Videos");
-
-  const toggleSidebar = () => {
-    setIsSidebarOpen((prev) => !prev);
-  };
 
   const {data , isLoading , error} = useQuery({
     queryKey:["my-channel"],
@@ -53,13 +46,7 @@ export default function ChannelPage() {
   const tabs = ["Videos", "Shorts", "Live", "Playlists", "Community"];
 
   return (
-    <div className="flex flex-col min-h-screen bg-white dark:bg-[#0f0f0f] text-gray-900 dark:text-gray-100 font-sans">
-      <Header onMenuClick={toggleSidebar} />
-      
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar isOpen={isSidebarOpen} />
-        
-        <main className="flex-1 overflow-y-auto">
+    <>
           {channelData?.banner && 
           <div className="w-full h-[150px] sm:h-[200px] md:h-[250px] lg:h-[300px] relative overflow-hidden group">
             <img 
@@ -204,8 +191,6 @@ export default function ChannelPage() {
               )}
             </div>
           </div>
-        </main>
-      </div>
-    </div>
+    </>
   );
 }

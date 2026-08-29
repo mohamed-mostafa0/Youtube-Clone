@@ -10,6 +10,7 @@ import { FaPlay } from "react-icons/fa";
 import ChannelAvatar from "./ChannelAvatar";
 import GoogleLoginButton from "./GoogleLoginButton";
 import { useAuth } from "../context/AuthContext";
+import Link from "next/link";
 
 
 export default function Header({ onMenuClick }) {
@@ -101,9 +102,9 @@ export default function Header({ onMenuClick }) {
                     <span className="text-sm text-gray-600 dark:text-gray-400">
                       @{user.uniqueChannelName || user.channelName.toLowerCase().replace(/\s+/g, '')}
                     </span>
-                    <a href="/channel" className="mt-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 text-left">
+                    <Link href="/channel" className="mt-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 text-left">
                       View your channel
-                    </a>
+                    </Link>
                   </div>
                 </div>
 

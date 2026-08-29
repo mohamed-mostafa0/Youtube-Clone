@@ -28,23 +28,19 @@ export const getSubscribedChannelsForUser = async ( req , res)=>{
     
     const {user} = req.loggedInUser
 
-    const subscribedChannels = await SubscriptionModel.find({subscriber:user._id}).populate("channel" , "logoUrl channelName")
-    if(subscribedChannels.length === 0) return res.status(200).json({message:"No subscribed channels found" , channels:[]})
+    const subscriptions = await SubscriptionModel.find({subscriber:user._id})
+        .select('channel -_id')
+        .populate("channel" , "logoUrl channelName uniqueChannelName")
+        
+    if(subscriptions.length === 0) return res.status(200).json({message:"No subscribed channels found" , channels:[]})
     
+    const subscribedChannels = subscriptions.map(sub => sub.channel);
+
     return res.status(200).json({message:"Subscribed channels fetched successfully" , channels:subscribedChannels})
 }
 
 
-// export const getChannel = async(req , res)=>{
-//     const{channelName} = req.params
 
-
-
-//     const channel = await userModel.findOne({uniqueChannelName:channelName})
-//     if(!channel) return res.status(404).json({message:"Channel not found"})
-
-//     return res.status(200).json({message:"Channel fetched successfully" , channel})
-// }
 
 export const getMyChannel = async(req , res)=>{
     const {user:{_id}} = req.loggedInUser

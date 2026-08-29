@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { 
   MdHomeFilled, 
   MdOutlineExplore, 
@@ -12,8 +13,12 @@ import ChannelAvatar from "./ChannelAvatar";
 import { useQuery } from "@tanstack/react-query";
 import { getSubscribedChannels } from "@/app/api/services/channelServices";
 import SubscribtionLoading from "./sidebar/SubscribtionLoading";
+import { useContext } from "react";
+import { subscriptionContext } from "@/context/SubscribtionProvider";
 
 export default function Sidebar({ isOpen }) {
+  const {subscribedChannelsData , isLoading} = useContext(subscriptionContext)  
+  
   const mainLinks = [
     { icon: <MdHomeFilled className="w-6 h-6" />, label: "Home" },
     { icon: <MdOutlineExplore className="w-6 h-6" />, label: "Shorts" },
@@ -38,14 +43,14 @@ export default function Sidebar({ isOpen }) {
     { icon: <MdOutlineExplore className="w-6 h-6" />, label: "Sports" },
   ];
 
-  const {data:subscribedChannels , isLoading} = useQuery({
-    queryKey:['subscribed-channels'],
-    queryFn:async()=>{
-      const res = await getSubscribedChannels()
-      console.log(res.data.channels);
-      return res.data.channels
-    }
-  })
+  // const {data:subscribedChannels , isLoading} = useQuery({
+  //   queryKey:['subscribed-channels'],
+  //   queryFn:async()=>{
+  //     const res = await getSubscribedChannels()
+  //     console.log(res.data);
+  //     return res.data.channels
+  //   }
+  // })
   
   return (
     <aside
@@ -98,21 +103,22 @@ export default function Sidebar({ isOpen }) {
             {isLoading ? (
 
               <SubscribtionLoading/>
-            ) : subscribedChannels?.length > 0 && (
+            ) : subscribedChannelsData?.length > 0 && (
               <div className="px-3 py-3 border-b border-gray-200 dark:border-gray-800">
                 <h3 className="px-3 py-2 text-base font-semibold text-gray-900 dark:text-gray-100">
                   Subscriptions
                 </h3>
-                {subscribedChannels.map((sub) => (
-                  <div
-                    key={sub.channel._id}
+                {subscribedChannelsData.map((channel) => (
+                  <Link
+                    key={channel._id}
                     className="flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-[#272727]"
+                    href={`/${channel.uniqueChannelName}`}
                   >
-                    <ChannelAvatar url={sub.channel.logoUrl} name={sub.channel.channelName} size="sm" />
+                    <ChannelAvatar url={channel.logoUrl} name={channel.channelName} size="sm" />
                     <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                      {sub.channel.channelName}
+                      {channel.channelName}
                     </span>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
