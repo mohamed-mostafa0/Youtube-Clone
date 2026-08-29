@@ -1,0 +1,102 @@
+import { videoReactionType } from "../../../Common/index.js";
+import { uploadImageOnCloudinary, uploadVideoOnCloudinary } from "../../../Common/Services/cloudinary.service.js";
+import { VideoModel, VideoReactionModel } from "../../../DB/Models/index.js";
+
+
+
+export const uploadVideo = async (req, res) => {
+    const { files } = req
+    const { title, description, category, visibility } = req.body
+    const { user: { _id } } = req.loggedInUser
+
+    const uploadedVideo = await VideoModel.create({
+        title,
+        description,
+        category,
+        visibility,
+        owner: _id,
+        status: "processing"
+    });
+
+    res.status(201).json({ message: "Video is processing...", uploadedVideo });
+
+    processVideoUpload(uploadedVideo._id, files).catch(console.error);
+}
+
+const processVideoUpload = async (videoId, files) => {
+    try {
+        const videoUploadResult = await uploadVideoOnCloudinary(files.video[0]);
+        const thumbnailUploadResult = await uploadImageOnCloudinary(files.thumbnail[0] , "youtube-clone-thumbnails");
+
+        await VideoModel.findByIdAndUpdate(videoId, {
+            videoUrl: videoUploadResult?.secure_url,
+            videoId: videoUploadResult?.public_id,
+            thumbnailUrl: thumbnailUploadResult?.secure_url,
+            thumbnailId: thumbnailUploadResult?.public_id,
+            duration: videoUploadResult?.duration,
+            status: "published"
+        });
+    } catch (err) {
+        await VideoModel.findByIdAndUpdate(videoId, { status: "failed" });
+    }
+}
+
+
+export const getVideos = async (req, res) => {
+
+    const videos = await VideoModel.find({ status: "published" }).populate("owner", "channelName logoUrl")
+    return res.status(200).json({ message: "Videos fetched successfully", videos })
+
+}
+
+export const getVideo = async (req, res) => {
+
+    const { videoId } = req.params
+
+    const video = await VideoModel.findById(videoId).populate("owner", "channelName logoUrl")
+    if (!video) return res.status(404).json({ message: "video not found" })
+
+    return res.status(200).json({ message: "Video fetched successfully", video })
+
+}
+
+export const reactionToVideo = async (req, res) => {
+
+    const { user } = req.loggedInUser
+    const { videoId } = req.params
+    const { type } = req.body
+
+    if (!Object.values(videoReactionType).includes(type)) return res.status(400).json({ message: "invalid reaction type" })
+
+    const video = await VideoModel.findById(videoId)
+    if (!video) return res.status(404).json({ message: "video not found" })
+
+    const previousReaction = await VideoReactionModel.findOne({ user: user._id, video: videoId })
+
+    if (previousReaction) {
+        if (previousReaction.type === type) {
+            await VideoReactionModel.findByIdAndDelete(previousReaction._id)
+            await VideoModel.findByIdAndUpdate(videoId, { $inc: { [`${type}s`]: -1 } })
+            return res.status(200).json({ message: "reaction removed successfully" })
+        }
+        await VideoReactionModel.findByIdAndUpdate(previousReaction._id, { type })
+        await VideoModel.findByIdAndUpdate(videoId, {
+            $inc: {
+                [`${previousReaction.type}s`]: -1,
+                [`${type}s`]: 1
+            }
+        })
+        return res.status(200).json({ message: "reaction updated successfully" })
+    }
+
+    await VideoReactionModel.create({
+        user: user._id,
+        video: videoId,
+        type
+    })
+    await VideoModel.findByIdAndUpdate(videoId, { $inc: { [`${type}s`]: 1 } })
+
+    return res.status(200).json({ message: "reaction added successfully" })
+
+}
+
