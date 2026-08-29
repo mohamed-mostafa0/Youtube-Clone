@@ -9,3 +9,11 @@ export const getUserChannel = async()=>{
 export const getSubscribedChannels = async()=>{
     return API.get("/user/subscribed-channels")
 }
+
+export const updateChannel = async(formData)=>{
+    return API.put("/user/update-channel", formData, {
+        headers: {
+            "Content-Type": "multipart/form-data"
+        }
+    })
+}
