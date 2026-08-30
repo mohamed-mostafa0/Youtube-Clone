@@ -54,7 +54,7 @@ export default function Sidebar({ isOpen }) {
   
   return (
     <aside
-      className={`fixed md:sticky top-[20px] left-0 h-[calc(100vh-56px)] bg-white dark:bg-[#0f0f0f] overflow-y-auto hover:scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-[#717171] z-40 transition-transform md:transition-none duration-200 ease-in-out ${
+      className={`fixed md:sticky top-[20px] left-0 h-[calc(100vh-56px)] bg-white dark:bg-[#0f0f0f] hover:scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-[#717171] z-40 transition-[width,transform] duration-300 ease-in-out overflow-x-hidden overflow-y-auto ${
         isOpen ? "translate-x-0 w-[240px]" : "-translate-x-full md:translate-x-0 md:w-[72px]"
       }`}
     >

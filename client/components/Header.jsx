@@ -45,9 +45,9 @@ export default function Header({ onMenuClick }) {
           <div className="bg-red-600 text-white p-1 rounded-lg">
             <FaPlay className="w-4 h-4" />
           </div>
-          <span className="text-xl font-semibold tracking-tighter text-gray-900 dark:text-white">
+          <Link href="/" className="text-xl font-semibold tracking-tighter text-gray-900 dark:text-white">
             StreamTube
-          </span>
+          </Link>
         </div>
       </div>
 

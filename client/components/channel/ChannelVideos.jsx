@@ -1,4 +1,4 @@
-import VideoCard from "../VideoCard";
+import VideoCard from "../video/VideoCard";
 
 export default function ChannelVideos({ videos, channelData }) {
   return (

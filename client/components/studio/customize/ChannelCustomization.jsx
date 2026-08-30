@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useFormik } from "formik";
-import { getUserChannel, updateChannel } from "../../app/api/services/channelServices";
+import { getUserChannel, updateChannel } from "../../../app/api/services/channelServices";
 import EditPageLoading from "./EditPageLoading";
 import BannerUpload from "./BannerUpload";
 import AvatarUpload from "./AvatarUpload";

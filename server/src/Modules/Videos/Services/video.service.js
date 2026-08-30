@@ -9,6 +9,9 @@ export const uploadVideo = async (req, res) => {
     const { title, description, category, visibility } = req.body
     const { user: { _id } } = req.loggedInUser
 
+    if (!files.video[0].mimetype.startsWith("video/")) return res.status(400).json({ message: "invalid video file" })
+    if (!files.thumbnail[0].mimetype.startsWith("image/")) return res.status(400).json({ message: "invalid thumbnail file" })
+
     const uploadedVideo = await VideoModel.create({
         title,
         description,
@@ -26,7 +29,7 @@ export const uploadVideo = async (req, res) => {
 const processVideoUpload = async (videoId, files) => {
     try {
         const videoUploadResult = await uploadVideoOnCloudinary(files.video[0]);
-        const thumbnailUploadResult = await uploadImageOnCloudinary(files.thumbnail[0] , "youtube-clone-thumbnails");
+        const thumbnailUploadResult = await uploadImageOnCloudinary(files.thumbnail[0], "youtube-clone-thumbnails");
 
         await VideoModel.findByIdAndUpdate(videoId, {
             videoUrl: videoUploadResult?.secure_url,
@@ -43,10 +46,20 @@ const processVideoUpload = async (videoId, files) => {
 
 
 export const getVideos = async (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+    const skip = (page - 1) * limit;
 
-    const videos = await VideoModel.find({ status: "published" }).populate("owner", "channelName logoUrl")
-    return res.status(200).json({ message: "Videos fetched successfully", videos })
+    const videos = await VideoModel.find({ status: "published" })
+        .populate("owner", "channelName logoUrl")
+        .skip(skip)
+        .limit(limit);
 
+    const totalVideos = await VideoModel.countDocuments({ status: "published" });
+    const hasNextPage = skip + videos.length < totalVideos;
+    const nextPage = hasNextPage ? page + 1 : null;
+
+    return res.status(200).json({ videos, nextPage });
 }
 
 export const getVideo = async (req, res) => {
@@ -56,7 +69,7 @@ export const getVideo = async (req, res) => {
     const video = await VideoModel.findById(videoId).populate("owner", "channelName logoUrl")
     if (!video) return res.status(404).json({ message: "video not found" })
 
-    return res.status(200).json({ message: "Video fetched successfully", video })
+    return res.status(200).json({ video })
 
 }
 
