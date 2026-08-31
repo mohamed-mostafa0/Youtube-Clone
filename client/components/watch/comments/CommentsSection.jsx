@@ -1,6 +1,8 @@
 import { useState } from "react";
 import Image from "next/image";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInView } from "react-intersection-observer";
 import { getCommentsByVideo, addComment } from "@/app/api/services/commentServices";
 import { useAuth } from "@/context/AuthContext";
 import Comment from "./Comment";
@@ -11,14 +13,30 @@ export default function CommentsSection({ videoId, commentsAllow }) {
   const queryClient = useQueryClient();
   const [commentContent, setCommentContent] = useState("");
 
-  const { data: commentsResponse, isLoading, error } = useQuery({
+  const { ref, inView } = useInView();
+
+  const { 
+    data: commentsResponse, 
+    isLoading, 
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage
+  } = useInfiniteQuery({
     queryKey: ["comments", videoId],
-    queryFn: async () => {
-      const res = await getCommentsByVideo(videoId);
+    queryFn: async ({ pageParam = 1 }) => {
+      const res = await getCommentsByVideo(videoId, pageParam);
       return res.data;
     },
+    getNextPageParam: (lastPage) => lastPage.nextPage,
     enabled: !!videoId && commentsAllow !== false,
   });
+
+  useEffect(() => {
+    if (inView && hasNextPage) {
+      fetchNextPage();
+    }
+  }, [inView, hasNextPage, fetchNextPage]);
 
   const addMutation = useMutation({
     mutationFn: addComment,
@@ -44,8 +62,8 @@ export default function CommentsSection({ videoId, commentsAllow }) {
     );
   }
 
-  const comments = commentsResponse?.comments || [];
-  const totalCommentsCount = commentsResponse?.commentsCount || 0;
+  const comments = commentsResponse?.pages.flatMap((page) => page.comments) || [];
+  const totalCommentsCount = commentsResponse?.pages[0]?.commentsCount || 0;
 
   return (
     <div className="mt-6 pt-6 border-t border-gray-200 dark:border-[#3f3f3f]">
@@ -106,6 +124,16 @@ export default function CommentsSection({ videoId, commentsAllow }) {
           {comments.map((comment) => (
             <Comment key={comment._id} comment={comment} videoId={videoId} />
           ))}
+
+          <div ref={ref} className="w-full flex justify-center py-4">
+            {isFetchingNextPage ? (
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 dark:border-white"></div>
+            ) : hasNextPage ? (
+              <span className="text-sm text-gray-500">Scroll for more</span>
+            ) : (
+              <span className="text-sm text-gray-500">No more comments</span>
+            )}
+          </div>
         </div>
       )}
     </div>

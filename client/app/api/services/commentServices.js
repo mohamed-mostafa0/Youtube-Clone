@@ -1,7 +1,7 @@
 import API from "../axios";
 
-export const getCommentsByVideo = async (videoId) => {
-    return await API.get(`/comment/${videoId}`);
+export const getCommentsByVideo = async (videoId, pageParam = 1) => {
+    return await API.get(`/comment/${videoId}?page=${pageParam}&limit=10`);
 };
 
 export const addComment = async (data) => {

@@ -68,22 +68,58 @@ const buildCommentTree = (comments) => {
 
 
 export const getCommentsByVideo = async (req , res)=>{
-        const {videoId} = req.params
+        const {videoId} = req.params;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
 
-        const video = await VideoModel.findById(videoId)
-        if(!video) return res.status(404).json({message:"Video Not Found"})
+        const video = await VideoModel.findById(videoId);
+        if(!video) return res.status(404).json({message:"Video Not Found"});
 
-        if(video.visibility === videoVisibility.PRIVATE) return res.status(403).json({message:"You can not access this video"})
+        if(video.visibility === videoVisibility.PRIVATE) return res.status(403).json({message:"You can not access this video"});
 
-        if(video.commentsAllow == false) return res.status(403).json({message:"Comments are disabled for this video"})
+        if(video.commentsAllow == false) return res.status(403).json({message:"Comments are disabled for this video"});
 
-        const comments = await CommentModel.find({
-            video:videoId
-        }).populate("owner" , "uniqueChannelName logoUrl").sort({createdAt:-1}).lean()
+        const rootComments = await CommentModel.find({
+            video: video._id,
+            parentComment: null
+        }).populate("owner" , "uniqueChannelName logoUrl").sort({createdAt:-1}).skip(skip).limit(limit).lean();
 
-        const commentTree = buildCommentTree(comments)
+        const rootCommentIds = rootComments.map(c => c._id);
 
-        return res.status(200).json({comments:commentTree , commentsCount:comments.length})
+        const descendants = await CommentModel.aggregate([
+            { $match: { _id: { $in: rootCommentIds } } },
+            {
+                $graphLookup: {
+                    from: "comments",
+                    startWith: "$_id",
+                    connectFromField: "_id",
+                    connectToField: "parentComment",
+                    as: "allReplies"
+                }
+            },
+            { $unwind: "$allReplies" },
+            { $replaceRoot: { newRoot: "$allReplies" } }
+        ]);
+
+        const populatedDescendants = await CommentModel.populate(descendants, { 
+            path: "owner", 
+            select: "uniqueChannelName logoUrl" 
+        });
+
+        const allCommentsForPage = [...rootComments, ...populatedDescendants];
+        const commentTree = buildCommentTree(allCommentsForPage);
+
+        const totalRootComments = await CommentModel.countDocuments({ video: videoId, parentComment: null });
+        const totalComments = await CommentModel.countDocuments({ video: videoId });
+        const hasNextPage = skip + rootComments.length < totalRootComments;
+        const nextPage = hasNextPage ? page + 1 : null;
+
+        return res.status(200).json({
+            comments: commentTree, 
+            commentsCount: totalComments,
+            nextPage
+        });
 }
 
 
@@ -127,4 +163,9 @@ export const updateComment = async(req , res)=>{
     if(!updatedComment) return res.status(500).json({message:"Failed to update comment"})
 
     return res.status(200).json({message:"Comment Updated Successfully" , updatedComment})
+}
+
+
+export const reactionToComment = async(req , res)=>{
+    
 }
