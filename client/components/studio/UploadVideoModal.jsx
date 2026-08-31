@@ -36,6 +36,7 @@ export default function UploadVideoModal({ isOpen, onClose }) {
       description: "",
       category: "gaming",
       visibility: "public",
+      commentsAllow: true,
       video: null,
       thumbnail: null
     },
@@ -78,6 +79,7 @@ export default function UploadVideoModal({ isOpen, onClose }) {
       data.append("description", values.description);
       data.append("category", values.category);
       data.append("visibility", values.visibility);
+      data.append("commentsAllow", values.commentsAllow);
       data.append("video", values.video);
       data.append("thumbnail", values.thumbnail);
 

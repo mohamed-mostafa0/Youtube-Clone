@@ -13,3 +13,11 @@ export const uploadVideo = async (formData) => {
         },
     });
 };
+
+export const getVideoById = (videoId) => {
+    return API.get(`/video/${videoId}`);
+};
+
+export const reactToVideo = (videoId, type) => {
+    return API.post(`/video/${videoId}/reaction`, { type });
+};

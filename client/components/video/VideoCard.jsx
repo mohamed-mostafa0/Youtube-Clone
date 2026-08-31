@@ -1,11 +1,12 @@
 import Image from "next/image";
+import Link from "next/link";
 import { MdCheckCircle, MdMoreVert } from "react-icons/md";
 import { formatDistanceToNow } from "date-fns";
 
 export default function VideoCard({ video , logo , channelName }) {
 
   return (
-    <div className="flex flex-col gap-3 group cursor-pointer w-full">
+    <Link href={`/watch/${video._id}`} className="flex flex-col gap-3 group cursor-pointer w-full">
       <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-gray-200 dark:bg-gray-800">
         {video.thumbnailUrl ? (
           <Image
@@ -51,6 +52,6 @@ export default function VideoCard({ video , logo , channelName }) {
           <MdMoreVert className="w-5 h-5 text-gray-900 dark:text-gray-100" />
         </button>
       </div>
-    </div>
+    </Link>
   );
 }

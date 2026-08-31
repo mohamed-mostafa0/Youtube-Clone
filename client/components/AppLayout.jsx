@@ -15,6 +15,7 @@ export default function AppLayout({ children }) {
 
   const pathname = usePathname();
   const isStudio = pathname?.startsWith('/studio');
+  const isWatchPage = pathname?.startsWith('/watch');
 
   return (
     <div className="flex flex-col h-screen bg-white dark:bg-[#0f0f0f] text-gray-900 dark:text-gray-100 font-sans">
@@ -22,7 +23,7 @@ export default function AppLayout({ children }) {
       
       <div className="flex flex-1 overflow-hidden">
         {
-          isStudio?<StudioSidebar isOpen={isSidebarOpen}/> : <Sidebar isOpen={isSidebarOpen} />
+          isWatchPage? null : isStudio?<StudioSidebar isOpen={isSidebarOpen}/> : <Sidebar isOpen={isSidebarOpen} />
         }
         
         <main className="flex-1 overflow-y-auto">

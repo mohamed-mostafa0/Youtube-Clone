@@ -25,8 +25,7 @@ export const videoCategories = ["gaming" , "music" , "news" , "technology" , "en
 
 export const videoVisibility = {
     PUBLIC:"public",
-    PRIVATE:"private",
-    UNLISTED:"unlisted"
+    PRIVATE:"private"
 }
 
 export const videoReactionType = {
@@ -34,3 +33,8 @@ export const videoReactionType = {
     DISLIKE:"dislike"
 }
 
+export const VideoStatus = {
+    PROCESSING:"processing",
+    PUBLISHED:"published",
+    FAILED:"failed"
+}

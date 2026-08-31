@@ -162,6 +162,28 @@ export default function StepDetails({ formik, thumbnailInputRef, handleThumbnail
           </div>
         </div>
 
+        <div>
+          <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">Comments</h4>
+          <p className="text-xs text-gray-500 mb-3">Choose whether viewers can leave comments on this video.</p>
+          
+          <label className="flex items-center gap-3 cursor-pointer">
+            <div className="relative">
+              <input 
+                type="checkbox" 
+                name="commentsAllow"
+                checked={formik.values.commentsAllow}
+                onChange={formik.handleChange}
+                className="sr-only"
+              />
+              <div className={`block w-10 h-6 rounded-full transition-colors ${formik.values.commentsAllow ? 'bg-black' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
+              <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${formik.values.commentsAllow ? 'transform translate-x-4' : ''}`}></div>
+            </div>
+            <span className="text-sm text-gray-900 dark:text-gray-100">
+              {formik.values.commentsAllow ? 'Allow comments' : 'Disable comments'}
+            </span>
+          </label>
+        </div>
+
       </div>
     </div>
   );

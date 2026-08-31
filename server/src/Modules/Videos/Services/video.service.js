@@ -6,7 +6,7 @@ import { VideoModel, VideoReactionModel } from "../../../DB/Models/index.js";
 
 export const uploadVideo = async (req, res) => {
     const { files } = req
-    const { title, description, category, visibility } = req.body
+    const { title, description, category, visibility ,commentsAllow} = req.body
     const { user: { _id } } = req.loggedInUser
 
     if (!files.video[0].mimetype.startsWith("video/")) return res.status(400).json({ message: "invalid video file" })
@@ -17,8 +17,9 @@ export const uploadVideo = async (req, res) => {
         description,
         category,
         visibility,
+        commentsAllow,
         owner: _id,
-        status: "processing"
+        status: "processing",
     });
 
     res.status(201).json({ message: "Video is processing...", uploadedVideo });

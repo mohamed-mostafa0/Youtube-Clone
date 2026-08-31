@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect } from "react";
 import ChannelBanner from "@/components/channel/ChannelBanner";
 import ChannelHeader from "@/components/channel/ChannelHeader";
 import ChannelTabs from "@/components/channel/ChannelTabs";
@@ -11,12 +12,21 @@ import { useQuery } from "@tanstack/react-query";
 import { getChannelByName } from "../api/services/channelServices";
 import ChannelLoading from "@/components/channel/ChannelLoading";
 import ChannelNotFound from "@/components/channel/ChannelNotFound";
+import { useAuth } from "@/context/AuthContext";
 
 export default function PublicChannelPage() {
   const params = useParams();
+  const {user} = useAuth();
+  const router = useRouter();
   const channelName = params?.channelName;
 
   const [activeTab, setActiveTab] = useState("Videos");
+  
+  useEffect(() => {
+    if(channelName && user && channelName === user?.uniqueChannelName) {
+      router.replace("/channel");
+    }
+  }, [channelName, user, router]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["channel", channelName],
@@ -26,11 +36,15 @@ export default function PublicChannelPage() {
       
       return res.data;
     },
-    enabled: !!channelName,
+    enabled: !!channelName && channelName !== user?.uniqueChannelName,
     refetchOnWindowFocus: false,
     staleTime: 2 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
+
+  if (channelName === user?.uniqueChannelName) {
+    return null; 
+  }
 
   const userChannelData = data?.channel;
   const userChannelVideos = data?.videos || [];

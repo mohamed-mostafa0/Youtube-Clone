@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import express from 'express'
 import dbConnection from './DB/db.connection.js'
-import { authController, userController, videoController ,channelController } from './Modules/index.js'
+import { authController, userController, videoController ,channelController, commentController } from './Modules/index.js'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
 
@@ -21,6 +21,7 @@ app.use("/auth" , authController)
 app.use("/video" , videoController)
 app.use("/user" , userController)
 app.use("" , channelController)
+app.use("/comment" , commentController)
 
 app.use((req , res)=>{
     return res.status(404).json({message:"Route Not Found"})

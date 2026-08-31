@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { videoCategories, videoVisibility } from "../../Common/index.js";
+import { videoCategories, VideoStatus, videoVisibility } from "../../Common/index.js";
 
 
 
@@ -50,8 +50,8 @@ const videoSchema = new mongoose.Schema({
     },
     status:{
         type:String,
-        enum:["processing" , "published" , "failed"],
-        default:"processing"
+        enum:Object.values(VideoStatus),
+        default:VideoStatus.PROCESSING
     },
     likes:{
         type:Number,
@@ -60,6 +60,10 @@ const videoSchema = new mongoose.Schema({
     dislikes:{
         type:Number,
         default:0
+    },
+    commentsAllow:{
+        type:Boolean,
+        default:true
     }
 },
 {
