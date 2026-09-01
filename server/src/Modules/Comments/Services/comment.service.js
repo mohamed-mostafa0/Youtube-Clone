@@ -1,5 +1,6 @@
-import { CommentModel, VideoModel } from "../../../DB/Models/index.js"
-import { videoVisibility } from "../../../Common/index.js"
+import { CommentModel, CommentReactionModel, VideoModel } from "../../../DB/Models/index.js"
+import { videoReactionType, videoVisibility } from "../../../Common/index.js"
+import mongoose from "mongoose";
 
 
 
@@ -68,6 +69,8 @@ const buildCommentTree = (comments) => {
 
 
 export const getCommentsByVideo = async (req , res)=>{
+    // console.log("test");
+    
         const {videoId} = req.params;
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
@@ -108,7 +111,29 @@ export const getCommentsByVideo = async (req , res)=>{
         });
 
         const allCommentsForPage = [...rootComments, ...populatedDescendants];
-        const commentTree = buildCommentTree(allCommentsForPage);
+        const commentIds = allCommentsForPage.map(c => c._id);
+        
+        let userReactionsMap = {};
+        if (req.loggedInUser && req.loggedInUser.user) {
+            const userId = req.loggedInUser.user._id;
+            const userReactions = await CommentReactionModel.find({
+                userId: userId,
+                commentId: { $in: commentIds }
+            }).lean();
+            
+            userReactions.forEach(reaction => {
+                userReactionsMap[reaction.commentId.toString()] = reaction.type;
+            });
+        }
+
+        const allCommentsWithReactions = allCommentsForPage.map(comment => {
+            return {
+                ...comment,
+                userReaction: userReactionsMap[comment._id.toString()] || null
+            }
+        });
+
+        const commentTree = buildCommentTree(allCommentsWithReactions);
 
         const totalRootComments = await CommentModel.countDocuments({ video: videoId, parentComment: null });
         const totalComments = await CommentModel.countDocuments({ video: videoId });
@@ -167,5 +192,88 @@ export const updateComment = async(req , res)=>{
 
 
 export const reactionToComment = async(req , res)=>{
-    
+    const {commentId} = req.params
+    const {user} = req.loggedInUser
+    const {type} = req.body
+
+    if(!type || (type !== videoReactionType.LIKE && type !== videoReactionType.DISLIKE)) return res.status(400).json({message: "Invalid reaction type"})
+    if(!commentId) return res.status(404).json({message: "Comment Not Found"}) 
+
+    const comment = await CommentModel.findById(commentId)
+    if(!comment) return res.status(404).json({message: "Comment Not Found"})
+
+    const session = await mongoose.startSession();
+    try{
+        session.startTransaction();
+
+    const existingReaction = await CommentReactionModel.findOne({
+        userId:user._id,
+        commentId
+    }).session(session)
+
+
+    let message;
+
+    if(existingReaction){
+        if(existingReaction.type === type){
+            const removeReaction = await CommentReactionModel.findByIdAndDelete(existingReaction._id , {session})
+            if(!removeReaction) throw new Error("Failed to remove reaction")
+            
+            const updateReactionCount = await CommentModel.findByIdAndUpdate(commentId , {$inc:{[`${type}s`]:-1}} , {session}) 
+            if(!updateReactionCount) throw new Error("Failed to update reaction count")
+
+            // return res.status(200).json({message:"Reaction removed successfully"})
+            message = 'Reaction removed successfully';
+        }else{
+            const updatedReaction = await CommentReactionModel.findByIdAndUpdate(existingReaction._id ,{
+                type
+            } , {new:true , session})
+            if(!updatedReaction) throw new Error("Failed to update reaction")
+
+            const updateCount  = await CommentModel.findByIdAndUpdate(
+                commentId, 
+                {
+
+                    $inc : {
+                        [`${type}s`]:1,
+                        [`${existingReaction.type}s`]:-1
+                    }
+                } , 
+                {new:true , session}
+            )
+            if(!updateCount) throw new Error("Failed to update reaction count")
+
+            // return res.status(200).json({message:"Reaction updated successfully"})
+            message = 'Reaction updated successfully';
+        }
+    } else {
+        const newReaction = await CommentReactionModel.create([{
+            userId:user._id,
+            commentId,
+            type
+        }], {session})  
+        if(!newReaction) throw new Error("Failed to create reaction")
+
+        const updateCount = await CommentModel.findByIdAndUpdate(commentId , {$inc:{[`${type}s`]:1}} , {session}) 
+        if(!updateCount) throw new Error("Failed to update reaction count")
+        
+        message = 'Reaction added successfully';
+    }
+
+    // return res.status(200).json({message:"Reaction added successfully"})
+    await session.commitTransaction();
+
+    return res.status(200).json({message})
+
+    }
+    catch(err){
+        await session.abortTransaction();
+        console.log(err);
+        
+        return res.status(500).json({message:"Internal Server Error"});
+    }
+    finally{
+        await session.endSession();
+    }
+     
 }

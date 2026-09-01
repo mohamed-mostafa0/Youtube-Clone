@@ -5,6 +5,7 @@ import { authenticationMiddleware } from '../../Middlewares/authentication.middl
 export const commentController = Router()
 
 commentController.post('/:videoId' , authenticationMiddleware , commentServices.addComment)
-commentController.get("/:videoId" , commentServices.getCommentsByVideo)
+commentController.get("/:videoId" , authenticationMiddleware, commentServices.getCommentsByVideo)
 commentController.delete("/:commentId" , authenticationMiddleware , commentServices.deleteComment)
 commentController.put("/:commentId" , authenticationMiddleware , commentServices.updateComment)
+commentController.post("/:commentId/react" , authenticationMiddleware , commentServices.reactionToComment)

@@ -25,12 +25,21 @@ export default function CommentsSection({ videoId, commentsAllow }) {
   } = useInfiniteQuery({
     queryKey: ["comments", videoId],
     queryFn: async ({ pageParam = 1 }) => {
-      const res = await getCommentsByVideo(videoId, pageParam);
+      const res = await getCommentsByVideo(videoId, pageParam);      
       return res.data;
     },
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    getNextPageParam: (lastPage , allPages) =>{
+      // console.log("lastPage",lastPage)
+      // console.log("nextPage",lastPage.nextPage)
+      // console.log("allPages",allPages)  
+      return lastPage.nextPage
+    } ,
+    maxPages:50,
     enabled: !!videoId && commentsAllow !== false,
   });
+  // console.log("commentsResponse",commentsResponse?.pages);
+  console.log("commentsResponse",commentsResponse);
+  
 
   useEffect(() => {
     if (inView && hasNextPage) {
@@ -63,6 +72,8 @@ export default function CommentsSection({ videoId, commentsAllow }) {
   }
 
   const comments = commentsResponse?.pages.flatMap((page) => page.comments) || [];
+  // console.log(comments);
+  
   const totalCommentsCount = commentsResponse?.pages[0]?.commentsCount || 0;
 
   return (

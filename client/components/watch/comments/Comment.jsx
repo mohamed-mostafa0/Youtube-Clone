@@ -4,7 +4,7 @@ import { formatDistanceToNow } from "date-fns";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AnimatePresence } from "framer-motion";
 import { MdThumbUp, MdThumbDown, MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
-import { addComment, deleteComment, updateComment } from "@/app/api/services/commentServices";
+import { addComment, commentReaction, deleteComment, updateComment } from "@/app/api/services/commentServices";
 import { useAuth } from "@/context/AuthContext";
 import DeleteCommentModal from "./DeleteCommentModal";
 import CommentEditForm from "./CommentEditForm";
@@ -22,6 +22,7 @@ export default function Comment({ comment, videoId }) {
   
   const [replyContent, setReplyContent] = useState("");
   const [editContent, setEditContent] = useState(comment.content);
+  const [userReaction, setUserReaction] = useState(comment.userReaction || null);
 
   const isOwner = user && user._id === comment.owner?._id;
 
@@ -33,6 +34,13 @@ export default function Comment({ comment, videoId }) {
       setReplyContent("");
     }
   });
+
+  const ReactionMutation = useMutation({
+    mutationFn:commentReaction,
+    onSuccess:()=>{
+      queryClient.invalidateQueries(["comments", videoId]);
+    }
+  })
 
   const editMutation = useMutation({
     mutationFn: updateComment,
@@ -48,6 +56,18 @@ export default function Comment({ comment, videoId }) {
       queryClient.invalidateQueries(["comments", videoId]);
     }
   });
+
+  const handleReaction = (type) => {
+    if (!user) return; 
+    
+    if (userReaction === type) {
+      setUserReaction(null);
+    } else {
+      setUserReaction(type);
+    }
+
+    ReactionMutation.mutate({ type, commentId: comment._id });
+  };
 
   const handleReplySubmit = () => {
     if (!replyContent.trim()) return;
@@ -67,7 +87,7 @@ export default function Comment({ comment, videoId }) {
   };
 
   return (
-    <div className="flex gap-4 w-full group">
+    <div className={`flex gap-4 w-full group p-2 rounded-lg transition-colors duration-300 bg-transparent`}>
       <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden relative flex-shrink-0 mt-1">
         {comment.owner?.logoUrl && (
           <a href={`/${comment.owner.uniqueChannelName}`} className="block w-full h-full">
@@ -111,11 +131,19 @@ export default function Comment({ comment, videoId }) {
 
         {!isEditing && (
           <div className="flex items-center gap-4 mt-2">
-            <button className="flex items-center cursor-pointer gap-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
+            <button 
+              onClick={() => handleReaction('like')}
+              disabled={ReactionMutation.isPending}
+              className={`flex items-center cursor-pointer gap-1.5 transition-colors disabled:opacity-50 ${ReactionMutation.isPending ? 'cursor-not-allowed' : ''} ${userReaction === 'like' ? 'text-blue-600 dark:text-[#3ea6ff]' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}`}
+            >
               <MdThumbUp className="w-4 h-4" />
               <span className="text-xs font-medium">{comment.likes || 0}</span>
             </button>
-            <button className="flex items-center cursor-pointer gap-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
+            <button 
+              onClick={() => handleReaction('dislike')}
+              disabled={ReactionMutation.isPending}
+              className={`flex items-center cursor-pointer gap-1.5 transition-colors disabled:opacity-50 ${ReactionMutation.isPending ? 'cursor-not-allowed' : ''} ${userReaction === 'dislike' ? 'text-blue-600 dark:text-[#3ea6ff]' : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'}`}
+            >
               <MdThumbDown className="w-4 h-4" />
             </button>
             {user && (

@@ -35,7 +35,7 @@ export default function CommentReplyForm({
           <button
             onClick={handleReplySubmit}
             disabled={isPending || !replyContent.trim()}
-            className="px-4 py-1.5 rounded-full text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-1.5 rounded-full text-sm cursor-pointer font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isPending ? "Replying..." : "Reply"}
           </button>
