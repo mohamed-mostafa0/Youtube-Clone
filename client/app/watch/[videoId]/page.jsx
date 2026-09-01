@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { getVideoById } from "@/app/api/services/videoServices";
@@ -9,9 +10,18 @@ import { formatDistanceToNow } from "date-fns";
 import WatchPageLoading from "@/components/watch/WatchPageLoading";
 import FetchingVideoError from "@/components/watch/FetchingVideoError";
 import CommentsSection from "@/components/watch/comments/CommentsSection";
+import VideoPlayer from "@/components/watch/VideoPlayer";
 
 export default function WatchPage() {
   const { videoId } = useParams();
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = () => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
 
   const { data: videoData, isLoading, error } = useQuery({
     queryKey: ["video", videoId],
@@ -41,16 +51,11 @@ export default function WatchPage() {
   return (
     <div className="flex-1 overflow-y-auto custom-scrollbar bg-white dark:bg-[#0f0f0f]">
       <div className="max-w-[1600px] mx-auto flex flex-col xl:flex-row gap-6 p-4 lg:p-6">
-        
+      
         <div className="flex-1 xl:w-[70%] xl:max-w-5xl">
           
-          <div className="w-full aspect-video bg-black rounded-xl overflow-hidden mb-4 shadow-sm">
-            <video 
-              src={video.videoUrl} 
-              controls 
-              autoPlay
-              className="w-full h-full object-contain"
-            />
+          <div className="w-full aspect-video  bg-black rounded-xl overflow-hidden mb-4 shadow-sm relative">
+            <VideoPlayer src={video.videoUrl} poster={video.thumbnailUrl} />
           </div>
 
           <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 line-clamp-2">
@@ -89,9 +94,14 @@ export default function WatchPage() {
                 </button>
               </div>
 
-              <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-[#272727] hover:bg-gray-200 dark:hover:bg-[#3f3f3f] rounded-full transition-colors">
-                <MdShare className="w-5 h-5 text-gray-800 dark:text-gray-200" />
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200 hidden sm:block">Share</span>
+              <button 
+                onClick={handleShare}
+                className="flex items-center gap-2 cursor-pointer px-4 py-2 bg-gray-100 dark:bg-[#272727] hover:bg-gray-200 dark:hover:bg-[#3f3f3f] rounded-full transition-colors"
+              >
+                {copied ? <MdCheckCircle className="w-5 h-5 text-blue-600 dark:text-[#3ea6ff]" /> : <MdShare className="w-5 h-5 text-gray-800 dark:text-gray-200" />}
+                <span className={`text-sm font-medium hidden sm:block ${copied ? 'text-blue-600 dark:text-[#3ea6ff]' : 'text-gray-800 dark:text-gray-200'}`}>
+                  {copied ? "Copied!" : "Share"}
+                </span>
               </button>
               
               <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-[#272727] hover:bg-gray-200 dark:hover:bg-[#3f3f3f] rounded-full transition-colors hidden sm:flex">

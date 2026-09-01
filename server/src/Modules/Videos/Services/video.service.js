@@ -32,8 +32,20 @@ const processVideoUpload = async (videoId, files) => {
         const videoUploadResult = await uploadVideoOnCloudinary(files.video[0]);
         const thumbnailUploadResult = await uploadImageOnCloudinary(files.thumbnail[0], "youtube-clone-thumbnails");
 
+        const secureUrl = videoUploadResult?.secure_url;
+        let hlsUrl = secureUrl;
+        if (secureUrl) {
+            hlsUrl = secureUrl.replace('/upload/', '/upload/sp_hd/');
+            const extIndex = hlsUrl.lastIndexOf('.');
+            if (extIndex !== -1) {
+                hlsUrl = hlsUrl.substring(0, extIndex) + '.m3u8';
+            } else {
+                hlsUrl += '.m3u8';
+            }
+        }
+
         await VideoModel.findByIdAndUpdate(videoId, {
-            videoUrl: videoUploadResult?.secure_url,
+            videoUrl: hlsUrl,
             videoId: videoUploadResult?.public_id,
             thumbnailUrl: thumbnailUploadResult?.secure_url,
             thumbnailId: thumbnailUploadResult?.public_id,

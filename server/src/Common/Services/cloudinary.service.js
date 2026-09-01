@@ -11,8 +11,12 @@ export const uploadVideoOnCloudinary = async (file) => {
     const result = await cloudinaryV2.uploader.upload(
         file.path,
         {
-            resource_type: "auto",
-            folder: "youtube-clone-videos"
+            resource_type: "video",
+            folder: "youtube-clone-videos",
+            eager: [
+                { streaming_profile: "hd", format: "m3u8" }
+            ],
+            eager_async: true
         }
     )
     return result
