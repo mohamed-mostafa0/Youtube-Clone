@@ -15,6 +15,8 @@ export function SubscribtionProvider({children}){
         queryKey:["subscribed-channels"],
         queryFn: async()=>{
             const res = await getSubscribedChannels()
+            console.log(res);
+            
             return res.data.channels
         },
         refetchOnWindowFocus:false,

@@ -8,8 +8,8 @@ import ChannelHeader from "@/components/channel/ChannelHeader";
 import ChannelTabs from "@/components/channel/ChannelTabs";
 import ChannelVideos from "@/components/channel/ChannelVideos";
 import ChannelEmptyState from "@/components/channel/ChannelEmptyState";
-import { useQuery } from "@tanstack/react-query";
-import { getChannelByName } from "../api/services/channelServices";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getChannelByName, toggleSubscribe } from "../api/services/channelServices";
 import ChannelLoading from "@/components/channel/ChannelLoading";
 import ChannelNotFound from "@/components/channel/ChannelNotFound";
 import { useAuth } from "@/context/AuthContext";
@@ -19,6 +19,8 @@ export default function PublicChannelPage() {
   const {user} = useAuth();
   const router = useRouter();
   const channelName = params?.channelName;
+
+  const quertClient = useQueryClient()
 
   const [activeTab, setActiveTab] = useState("Videos");
   
@@ -41,6 +43,17 @@ export default function PublicChannelPage() {
     staleTime: 2 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
+
+  const toggleSubscribeMutation = useMutation({
+    mutationFn:toggleSubscribe,
+    onSuccess: () => {
+      quertClient.invalidateQueries(["channel",channelName]);
+    }
+  });
+
+  const handleSubscribe = ()=>{
+    toggleSubscribeMutation.mutate({channelId:data.channel._id})
+  }
 
   if (channelName === user?.uniqueChannelName) {
     return null; 
@@ -72,7 +85,7 @@ export default function PublicChannelPage() {
               <ChannelBanner banner={channelData?.banner} />
 
               <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                <ChannelHeader channelData={channelData} />
+                <ChannelHeader channelData={channelData} handleSubscribe={handleSubscribe} isSubscribed={userChannelData?.isSubscribed} />
 
                 <ChannelTabs 
                   tabs={tabs} 

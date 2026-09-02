@@ -14,8 +14,8 @@ export const getSubscribedChannels = async()=>{
     return API.get("/user/subscribed-channels")
 }
 
-export const isSubscribed = async(channelName)=>{
-    return API.get(`/channel/is-subscribed/${channelName}`)
+export const toggleSubscribe = async({channelId})=>{
+    return API.post(`/user/toggle-subscribe/${channelId}`)
 }
 
 export const updateChannel = async(formData)=>{

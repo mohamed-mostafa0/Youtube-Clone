@@ -1,7 +1,12 @@
 import { MdCheckCircle } from "react-icons/md";
 import { FaChevronRight } from "react-icons/fa";
 
-export default function ChannelHeader({ channelData }) {
+export default function ChannelHeader({
+  channelData
+  , isSubscribed
+  , handleSubscribe
+}) {
+  
   return (
     <div className="flex flex-col md:flex-row gap-6 items-start md:items-center mb-8">
       <div className="relative group cursor-pointer">
@@ -33,9 +38,11 @@ export default function ChannelHeader({ channelData }) {
         </p>
 
         <button
-          className="rounded-full w-fit px-5 py-2 mt-5 bg-black text-white dark:bg-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 transition-all duration-300 font-semibold text-sm sm:text-base cursor-pointer"
+          onClick={() => handleSubscribe()}
+          className={`rounded-full w-fit px-5 py-2 mt-5 transition-all duration-300 font-semibold text-sm sm:text-base cursor-pointer active:scale-95
+          ${isSubscribed ? "bg-gray-200 dark:bg-[#272727] text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-[#3f3f3f]" : "bg-black dark:bg-white text-white dark:text-black hover:opacity-90 hover:scale-105 hover:shadow-lg"}`}
         >
-          Subscribe
+          {isSubscribed ? "Unsubscribe" : "Subscribe"}
         </button>
       </div>
     </div>

@@ -12,15 +12,37 @@ export const toggleSubscribe = async (req , res)=>{
     if(!channelId) return res.status(400).json({message:"channelId is required"})
     if(channelId === user._id.toString()) return res.status(400).json({message:"You can't subscribe to yourself"})
 
-    const isSubscribed = await SubscriptionModel.findOne({channel:channelId , subscriber:user._id})
-    if(isSubscribed){
-        await SubscriptionModel.findByIdAndDelete(isSubscribed._id)
-        await userModel.findByIdAndUpdate(channelId , {$inc:{subscribers:-1}})
-        return res.status(200).json({message:"Unsubscribed successfully"})
+    const channel = await userModel.findById(channelId)
+    if(!channel) return res.status(404).json({message:"channel not found"})
+
+    const session = await mongoose.startSession()
+
+    try{
+         session.startTransaction()
+         let message;
+
+        const isSubscribed = await SubscriptionModel.findOne({channel:channelId , subscriber:user._id})
+        
+        if(isSubscribed){
+            await SubscriptionModel.findByIdAndDelete(isSubscribed._id).session(session)
+            await userModel.findByIdAndUpdate(channelId , {$inc:{subscribers:-1}}).session(session)
+            message = "Unsubscribed successfully"
+        }else{
+            await SubscriptionModel.create([{channel:channelId , subscriber:user._id}] , {session})
+            await userModel.findByIdAndUpdate(channelId , {$inc:{subscribers:1}}).session(session)
+            message = "Subscribed successfully"
+        }
+         await session.commitTransaction()
+         return res.status(200).json({message})
     }
-    await SubscriptionModel.create({channel:channelId , subscriber:user._id})
-    await userModel.findByIdAndUpdate(channelId , {$inc:{subscribers:1}})
-    return res.status(200).json({message:"Subscribed successfully"})
+    catch(error){
+         session.abortTransaction()
+         console.log(error)
+         res.status(500).json({message:"internal server error"})
+    }
+    finally{
+        session.endSession()
+    }
 }
 
 

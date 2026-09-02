@@ -1,7 +1,7 @@
 import { startSession } from "mongoose";
 import { videoReactionType } from "../../../Common/index.js";
 import { uploadImageOnCloudinary, uploadVideoOnCloudinary } from "../../../Common/Services/cloudinary.service.js";
-import { VideoModel, VideoReactionModel } from "../../../DB/Models/index.js";
+import { SubscriptionModel, VideoModel, VideoReactionModel } from "../../../DB/Models/index.js";
 
 
 
@@ -80,21 +80,31 @@ export const getVideo = async (req, res) => {
 
     const { videoId } = req.params
 
-    const video = await VideoModel.findById(videoId).populate("owner", "channelName logoUrl subscribers").lean()
+    const video = await VideoModel.findById(videoId).populate("owner", "channelName logoUrl subscribers uniqueChannelName").lean()
     if (!video) return res.status(404).json({ message: "video not found" })
 
+
     let userReaction = null;
+    let isSubscribed = false;
     if (req.loggedInUser && req.loggedInUser.user) {
         const reaction = await VideoReactionModel.findOne({
             user: req.loggedInUser.user._id,
             video: videoId
         }).lean();
+        const subscribe = await SubscriptionModel.findOne({
+            subscriber: req.loggedInUser.user._id,
+            channel: video.owner._id
+        }).lean();
         if (reaction) {
             userReaction = reaction.type;
+        }
+        if (subscribe) {
+            isSubscribed = true;
         }
     }
 
     video.userReaction = userReaction;
+    video.isSubscribed = isSubscribed;
 
     return res.status(200).json({ video })
 

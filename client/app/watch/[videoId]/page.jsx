@@ -13,6 +13,8 @@ import WatchPageLoading from "@/components/watch/WatchPageLoading";
 import FetchingVideoError from "@/components/watch/FetchingVideoError";
 import CommentsSection from "@/components/watch/comments/CommentsSection";
 import VideoPlayer from "@/components/watch/VideoPlayer";
+import { toggleSubscribe } from "@/app/api/services/channelServices";
+import Link from "next/link";
 
 export default function WatchPage() {
   const { videoId } = useParams();
@@ -41,12 +43,28 @@ export default function WatchPage() {
   });
 
   const { user } = useAuth();
+
   const reactionToVideoMutation = useMutation({
     mutationFn:reactToVideo,
     onSuccess:()=>{
       queryClient.invalidateQueries(["video", videoId])
     }
   })
+
+  const toggleSubscribeMutation = useMutation({
+    mutationFn:toggleSubscribe,
+    onSuccess:()=>{
+      queryClient.invalidateQueries(["video", videoId])
+    }
+  })
+
+  const handleSubscribe = ()=>{
+    if(!user){
+      toast.error("You must be logged in to subscribe to the channel!");
+      return;
+    }
+    toggleSubscribeMutation.mutate({channelId:videoData.video.owner._id})
+  }
 
   const handleReactToVideo = (type)=>{
     if (!user) {
@@ -85,21 +103,22 @@ export default function WatchPage() {
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
             
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden relative flex-shrink-0 cursor-pointer">
+              <Link href={`/${video.owner?.uniqueChannelName}`} className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden relative flex-shrink-0 cursor-pointer">
                 {video.owner?.logoUrl && (
                   <Image src={video.owner.logoUrl} alt="Channel" fill className="object-cover" />
                 )}
-              </div>
-              <div className="flex flex-col cursor-pointer pr-4">
+              </Link>
+              <Link href={`/${video.owner?.uniqueChannelName}`} className="flex flex-col cursor-pointer pr-4">
                 <div className="flex items-center gap-1">
                   <span className="font-semibold text-gray-900 dark:text-gray-100">{video.owner?.channelName || "Unknown Channel"}</span>
                   <MdCheckCircle className="w-3.5 h-3.5 text-gray-400" />
                 </div>
                 <span className="text-xs text-gray-500">{video.owner.subscribers || 0} Subscribers</span>
-              </div>
+              </Link>
               
-              <button className="bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-full font-medium text-sm hover:opacity-90 transition-opacity">
-                Subscribe
+              <button onClick={() => handleSubscribe()} className={`cursor-pointer px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 active:scale-95
+                 ${video.isSubscribed ? 'bg-gray-100 dark:bg-[#272727] text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#333333]' : 'bg-black dark:bg-white text-white dark:text-black hover:opacity-90 hover:scale-105 hover:shadow-lg'}`}>
+                {video.isSubscribed ? 'Unsubscribe' : 'Subscribe'}
               </button>
             </div>
 
