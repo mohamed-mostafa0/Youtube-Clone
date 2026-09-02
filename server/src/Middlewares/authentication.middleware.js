@@ -25,3 +25,24 @@ export const authenticationMiddleware = async(req , res , next)=>{
         return res.status(401).json({message: "Invalid or expired access token , please log in again"});
     }
 }
+
+export const optionalAuthenticationMiddleware = async(req , res , next)=>{
+    const accessToken = req.cookies.accessToken
+    if(!accessToken) return next()
+
+    try {
+        const decodedToken = verifyToken(accessToken, process.env.ACCESS_TOKEN_SECRET)
+        if(!decodedToken) return next()
+        
+        const checkBlaklistedToken = await BlacklistedTokenModel.findOne({tokenId:decodedToken.jti})
+        if(checkBlaklistedToken) return next()
+
+        const user = await userModel.findOne({_id:decodedToken._id})
+        if(!user) return next()
+
+        req.loggedInUser = {user , token:{tokenId:decodedToken.jti , expiresAt:decodedToken.exp}}
+        next()
+    } catch (error) {
+        return next()
+    }
+}

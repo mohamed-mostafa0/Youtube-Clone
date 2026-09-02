@@ -25,7 +25,8 @@ export default function CommentsSection({ videoId, commentsAllow }) {
   } = useInfiniteQuery({
     queryKey: ["comments", videoId],
     queryFn: async ({ pageParam = 1 }) => {
-      const res = await getCommentsByVideo(videoId, pageParam);      
+      const res = await getCommentsByVideo(videoId, pageParam);   
+      console.log("res",res.data);
       return res.data;
     },
     getNextPageParam: (lastPage , allPages) =>{
@@ -38,7 +39,7 @@ export default function CommentsSection({ videoId, commentsAllow }) {
     enabled: !!videoId && commentsAllow !== false,
   });
   // console.log("commentsResponse",commentsResponse?.pages);
-  console.log("commentsResponse",commentsResponse);
+  // console.log("commentsResponse",commentsResponse);
   
 
   useEffect(() => {
@@ -99,14 +100,14 @@ export default function CommentsSection({ videoId, commentsAllow }) {
               <div className="flex justify-end gap-2 mt-1">
                 <button
                   onClick={() => setCommentContent("")}
-                  className="px-4 py-2 rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-[#3f3f3f] transition-colors text-gray-800 dark:text-gray-200"
+                  className="px-4 py-2 cursor-pointer rounded-full text-sm font-medium hover:bg-gray-100 dark:hover:bg-[#3f3f3f] transition-colors text-gray-800 dark:text-gray-200"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleCommentSubmit}
                   disabled={addMutation.isPending}
-                  className="px-4 py-2 rounded-full text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 rounded-full cursor-pointer text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {addMutation.isPending ? "Commenting..." : "Comment"}
                 </button>

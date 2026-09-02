@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import { useAuth } from "@/context/AuthContext";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
-import { getVideoById } from "@/app/api/services/videoServices";
+import { getVideoById, reactToVideo } from "@/app/api/services/videoServices";
 import Image from "next/image";
 import { MdThumbUp, MdThumbDown, MdShare, MdDownload, MdMoreHoriz, MdCheckCircle } from "react-icons/md";
 import { formatDistanceToNow } from "date-fns";
@@ -15,6 +17,8 @@ import VideoPlayer from "@/components/watch/VideoPlayer";
 export default function WatchPage() {
   const { videoId } = useParams();
   const [copied, setCopied] = useState(false);
+
+  const queryClient = useQueryClient();
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href).then(() => {
@@ -35,6 +39,22 @@ export default function WatchPage() {
     gcTime: 15 * 60 * 1000,
     refetchOnWindowFocus:false
   });
+
+  const { user } = useAuth();
+  const reactionToVideoMutation = useMutation({
+    mutationFn:reactToVideo,
+    onSuccess:()=>{
+      queryClient.invalidateQueries(["video", videoId])
+    }
+  })
+
+  const handleReactToVideo = (type)=>{
+    if (!user) {
+      toast.error("You must be logged in to like or dislike the video!");
+      return;
+    }
+    reactionToVideoMutation.mutate({videoId , type})
+  }
 
   if (isLoading) {
     return (
@@ -75,7 +95,7 @@ export default function WatchPage() {
                   <span className="font-semibold text-gray-900 dark:text-gray-100">{video.owner?.channelName || "Unknown Channel"}</span>
                   <MdCheckCircle className="w-3.5 h-3.5 text-gray-400" />
                 </div>
-                <span className="text-xs text-gray-500">Subscribers hidden</span>
+                <span className="text-xs text-gray-500">{video.owner.subscribers || 0} Subscribers</span>
               </div>
               
               <button className="bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-full font-medium text-sm hover:opacity-90 transition-opacity">
@@ -85,12 +105,18 @@ export default function WatchPage() {
 
             <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 hide-scrollbar shrink-0">
               <div className="flex bg-gray-100 dark:bg-[#272727] rounded-full overflow-hidden">
-                <button className="flex items-center gap-2 px-4 py-2 hover:bg-gray-200 dark:hover:bg-[#3f3f3f] transition-colors border-r border-gray-300 dark:border-gray-600">
-                  <MdThumbUp className="w-5 h-5 text-gray-800 dark:text-gray-200" />
-                  <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{video.likes || 0}</span>
+                <button
+                onClick={()=>handleReactToVideo('like')}
+                disabled={reactionToVideoMutation.isPending}
+                className={`flex items-center cursor-pointer gap-2 px-4 py-2 hover:bg-gray-200 dark:hover:bg-[#3f3f3f] transition-colors border-r border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed`}>
+                  <MdThumbUp className={`w-5 h-5 ${video.userReaction === 'like' ? 'text-blue-600 dark:text-[#3ea6ff]' : 'text-gray-800 dark:text-gray-200'}`} />
+                  <span className={`text-sm font-medium ${video.userReaction === 'like' ? 'text-blue-600 dark:text-[#3ea6ff]' : 'text-gray-800 dark:text-gray-200'}`}>{video.likes || 0}</span>
                 </button>
-                <button className="px-4 py-2 hover:bg-gray-200 dark:hover:bg-[#3f3f3f] transition-colors">
-                  <MdThumbDown className="w-5 h-5 text-gray-800 dark:text-gray-200" />
+                <button
+                onClick={()=>handleReactToVideo('dislike')}
+                disabled={reactionToVideoMutation.isPending}
+                className={`px-4 cursor-pointer py-2 hover:bg-gray-200 dark:hover:bg-[#3f3f3f] transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}>
+                  <MdThumbDown className={`w-5 h-5 ${video.userReaction === 'dislike' ? 'text-blue-600 dark:text-[#3ea6ff]' : 'text-gray-800 dark:text-gray-200'}`} />
                 </button>
               </div>
 

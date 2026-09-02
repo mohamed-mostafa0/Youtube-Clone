@@ -7,6 +7,7 @@ export const getVideos = ({ pageParam = 1 } = {}) => {
 }
 
 export const uploadVideo = async (formData) => {
+    
     return API.post("/video/upload", formData, {
         headers: {
             "Content-Type": "multipart/form-data",
@@ -18,6 +19,6 @@ export const getVideoById = (videoId) => {
     return API.get(`/video/${videoId}`);
 };
 
-export const reactToVideo = (videoId, type) => {
-    return API.post(`/video/${videoId}/reaction`, { type });
+export const reactToVideo = ({videoId, type}) => {
+    return API.post(`/video/${videoId}/react`, { type });
 };

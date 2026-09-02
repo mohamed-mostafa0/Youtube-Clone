@@ -10,6 +10,7 @@ import DeleteCommentModal from "./DeleteCommentModal";
 import CommentEditForm from "./CommentEditForm";
 import CommentReplyForm from "./CommentReplyForm";
 import CommentOwnerOptions from "./CommentOwnerOptions";
+import toast from "react-hot-toast";
 
 export default function Comment({ comment, videoId }) {
   const { user } = useAuth();
@@ -58,7 +59,10 @@ export default function Comment({ comment, videoId }) {
   });
 
   const handleReaction = (type) => {
-    if (!user) return; 
+    if (!user) {
+      toast.error("You must be logged in to like or dislike comments!");
+      return; 
+    }
     
     if (userReaction === type) {
       setUserReaction(null);

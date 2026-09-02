@@ -1,3 +1,4 @@
+import { startSession } from "mongoose";
 import { videoReactionType } from "../../../Common/index.js";
 import { uploadImageOnCloudinary, uploadVideoOnCloudinary } from "../../../Common/Services/cloudinary.service.js";
 import { VideoModel, VideoReactionModel } from "../../../DB/Models/index.js";
@@ -79,8 +80,21 @@ export const getVideo = async (req, res) => {
 
     const { videoId } = req.params
 
-    const video = await VideoModel.findById(videoId).populate("owner", "channelName logoUrl")
+    const video = await VideoModel.findById(videoId).populate("owner", "channelName logoUrl subscribers").lean()
     if (!video) return res.status(404).json({ message: "video not found" })
+
+    let userReaction = null;
+    if (req.loggedInUser && req.loggedInUser.user) {
+        const reaction = await VideoReactionModel.findOne({
+            user: req.loggedInUser.user._id,
+            video: videoId
+        }).lean();
+        if (reaction) {
+            userReaction = reaction.type;
+        }
+    }
+
+    video.userReaction = userReaction;
 
     return res.status(200).json({ video })
 
@@ -93,36 +107,55 @@ export const reactionToVideo = async (req, res) => {
     const { type } = req.body
 
     if (!Object.values(videoReactionType).includes(type)) return res.status(400).json({ message: "invalid reaction type" })
+    if(!videoId) return res.status(400).json({ message: "video id is required" })
 
     const video = await VideoModel.findById(videoId)
     if (!video) return res.status(404).json({ message: "video not found" })
 
-    const previousReaction = await VideoReactionModel.findOne({ user: user._id, video: videoId })
+    const session = await startSession()
 
-    if (previousReaction) {
-        if (previousReaction.type === type) {
-            await VideoReactionModel.findByIdAndDelete(previousReaction._id)
-            await VideoModel.findByIdAndUpdate(videoId, { $inc: { [`${type}s`]: -1 } })
-            return res.status(200).json({ message: "reaction removed successfully" })
-        }
-        await VideoReactionModel.findByIdAndUpdate(previousReaction._id, { type })
-        await VideoModel.findByIdAndUpdate(videoId, {
-            $inc: {
-                [`${previousReaction.type}s`]: -1,
-                [`${type}s`]: 1
+    try{
+        session.startTransaction()
+        let message;
+
+        const previousReaction = await VideoReactionModel.findOne({ user: user._id, video: videoId }).session(session)
+
+        if (previousReaction) {
+            if (previousReaction.type === type) {
+                await VideoReactionModel.findByIdAndDelete(previousReaction._id , {session})
+                await VideoModel.findByIdAndUpdate(videoId, { $inc: { [`${type}s`]: -1 } } ,{session})
+                message = "reaction removed successfully"
+            } else {
+                await VideoReactionModel.findByIdAndUpdate(previousReaction._id, { type } ,{session})
+                await VideoModel.findByIdAndUpdate(videoId, {
+                    $inc: {
+                        [`${previousReaction.type}s`]: -1,
+                        [`${type}s`]: 1
+                    }
+                }, {session})
+                message = "reaction updated successfully"
             }
-        })
-        return res.status(200).json({ message: "reaction updated successfully" })
+        }else{
+            await VideoReactionModel.create([{
+                user: user._id,
+                video: videoId,
+                type
+            }], {session})
+            await VideoModel.findByIdAndUpdate(videoId, { $inc: { [`${type}s`]: 1 } } ,{session})
+            message = "reaction added successfully"
+        }
+
+        await session.commitTransaction()
+
+        return res.status(200).json({ message });
+
     }
-
-    await VideoReactionModel.create({
-        user: user._id,
-        video: videoId,
-        type
-    })
-    await VideoModel.findByIdAndUpdate(videoId, { $inc: { [`${type}s`]: 1 } })
-
-    return res.status(200).json({ message: "reaction added successfully" })
+    catch (error) {
+        await session.abortTransaction()
+        return res.status(500).json({ message: "something went wrong" })
+    } finally {
+        session.endSession()
+    }
 
 }
 
