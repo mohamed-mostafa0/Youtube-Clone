@@ -14,6 +14,9 @@ userController.put("/update-channel" , authenticationMiddleware,upload().fields(
 ]) , userServices.updateChannel)
 userController.get("/liked-videos" , authenticationMiddleware , userServices.getLikedVideos)
 userController.get("/subscribed-videos" , authenticationMiddleware , userServices.getSubscribedChannelsVideos)
+userController.get("/history" , authenticationMiddleware , userServices.getHistory)
+userController.delete("/delete-history" , authenticationMiddleware , userServices.deleteHistory)
+userController.delete("/delete-from-history/:videoId" , authenticationMiddleware , userServices.deleteVideoFromHistory)
 
 
 

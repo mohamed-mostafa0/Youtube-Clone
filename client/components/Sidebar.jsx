@@ -30,7 +30,7 @@ export default function Sidebar({ isOpen }) {
 
   const secondaryLinks = [
     { icon: <MdOutlineVideoLibrary className="w-6 h-6" />, label: "Library" },
-    { icon: <MdHistory className="w-6 h-6" />, label: "History" },
+    { icon: <MdHistory className="w-6 h-6" />, label: "History", href: "/feed/history" },
     { icon: <MdOutlineOndemandVideo className="w-6 h-6" />, label: "Your videos" },
     { icon: <MdOutlineWatchLater className="w-6 h-6" />, label: "Watch later" },
     { icon: <MdThumbUpOffAlt className="w-6 h-6" />, label: "Liked videos", href: "/liked-videos" },

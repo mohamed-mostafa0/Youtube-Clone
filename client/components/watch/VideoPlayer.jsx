@@ -49,7 +49,7 @@ export default function VideoPlayer({ src, poster, onPlay, onViewThreshold }) {
           let thresholdTriggered = false;
           playerRef.current.on('timeupdate', (e) => {
             const player = e.detail.plyr;
-            if (player.currentTime >= 10) {
+            if (player.currentTime >= 1) {
               if (!thresholdTriggered) {
                 thresholdTriggered = true;
                 onViewThreshold();
@@ -91,7 +91,7 @@ export default function VideoPlayer({ src, poster, onPlay, onViewThreshold }) {
         let thresholdTriggered = false;
         playerRef.current.on('timeupdate', (e) => {
           const player = e.detail.plyr;
-          if (player.currentTime >= 10) {
+          if (player.currentTime >= 1) {
             if (!thresholdTriggered) {
               thresholdTriggered = true;
               onViewThreshold();

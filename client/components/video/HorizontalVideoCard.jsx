@@ -1,10 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
-import { MdCheckCircle, MdMoreVert } from "react-icons/md";
-import { formatDistanceToNow } from "date-fns";
+import { MdCheckCircle, MdMoreVert, MdClose } from "react-icons/md";
 import { formatDuration, timeAgo, formatViews } from "@/helpers/video";
 
-export default function HorizontalVideoCard({ video, index }) {
+export default function HorizontalVideoCard({ video, index, onRemove }) {
   // const formatDuration = (duration) => {
   //   if (!duration) return "10:00";
   //   const num = Number(duration);
@@ -64,9 +63,21 @@ export default function HorizontalVideoCard({ video, index }) {
 
         </div>
 
-        <button className="absolute right-0 top-0 p-1.5 opacity-0 group-hover:opacity-100 transition-opacity rounded-full hover:bg-gray-200 dark:hover:bg-[#3f3f3f]">
-          <MdMoreVert className="w-5 h-5 text-gray-900 dark:text-gray-100" />
-        </button>
+        {onRemove ? (
+          <button 
+            onClick={(e) => {
+              e.preventDefault();
+              onRemove(video._id);
+            }}
+            className="absolute cursor-pointer right-0 top-0 p-1.5 opacity-0 group-hover:opacity-100 transition-opacity rounded-full hover:bg-gray-200 dark:hover:bg-[#3f3f3f]"
+          >
+            <MdClose className="w-5 h-5 text-gray-900 dark:text-gray-100" />
+          </button>
+        ) : (
+          <button className="absolute right-0 top-0 p-1.5 opacity-0 group-hover:opacity-100 transition-opacity rounded-full hover:bg-gray-200 dark:hover:bg-[#3f3f3f]">
+            <MdMoreVert className="w-5 h-5 text-gray-900 dark:text-gray-100" />
+          </button>
+        )}
       </div>
     </div>
   );

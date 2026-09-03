@@ -1,5 +1,5 @@
 import { deleteResourceOnCloudinary, uploadImageOnCloudinary } from "../../../Common/index.js"
-import { SubscriptionModel, userModel, VideoModel, CommentModel, VideoReactionModel } from "../../../DB/Models/index.js"
+import { SubscriptionModel, userModel, VideoModel, CommentModel, VideoReactionModel, VideoViewModel, HistoryModel } from "../../../DB/Models/index.js"
 import mongoose from  "mongoose"
 
 
@@ -203,4 +203,66 @@ export const getSubscribedChannelsVideos = async(req , res)=>{
     }).sort({createdAt:-1}).populate("owner" , "channelName logoUrl uniqueChannelName")
 
     return res.status(200).json({message:"Subscribed channels videos fetched successfully" , videos})
+}
+
+
+export const getHistory = async(req , res)=>{
+    const {user} = req.loggedInUser
+
+    // const history = await VideoViewModel.find({
+    //     user:user._id
+    // }).populate({
+    //     path:"video",
+    //     select:"title thumbnailUrl duration videoUrl owner",
+    //     populate:{
+    //         path:"owner",
+    //         select:"channelName logoUrl uniqueChannelName"
+    //     }
+    // })
+    // .sort({createdAt:-1})
+
+    const history = await HistoryModel.find({
+        user:user._id
+    }).populate({
+        path:"video",
+        select:"title thumbnailUrl duration videoUrl owner views",
+        populate:{
+            path:"owner",
+            select:"channelName logoUrl uniqueChannelName"
+        }
+    })
+    .sort({updatedAt:-1})
+
+    return res.status(200).json({message:"History fetched successfully" , videos:history})
+}
+
+
+export const deleteHistory = async(req ,res)=>{
+    const {user} = req.loggedInUser
+
+    await HistoryModel.deleteMany({
+        user:user._id
+    })
+
+    return res.status(200).json({message:"History deleted successfully"})
+}
+
+export const deleteVideoFromHistory = async(req , res)=>{
+    const {user} = req.loggedInUser
+    const {videoId} = req.params
+
+    if(!videoId) return res.status(400).json({message:"Please provide video id"})
+    
+    const video = await VideoModel.findById(videoId)
+    if(!video) return res.status(404).json({message:"Video not found"})
+
+    const history = await HistoryModel.findOne({
+        user:user._id,
+        video:videoId
+    })
+    if(!history) return res.status(404).json({message:"Video not found in history"})
+
+    await HistoryModel.findByIdAndDelete(history._id)
+
+    return res.status(200).json({message:"Video deleted from history successfully"})
 }

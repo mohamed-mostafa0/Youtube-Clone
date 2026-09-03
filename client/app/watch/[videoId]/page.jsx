@@ -13,7 +13,8 @@ import { formatDistanceToNow } from "date-fns";
 import WatchPageLoading from "@/components/watch/WatchPageLoading";
 import FetchingVideoError from "@/components/watch/FetchingVideoError";
 import CommentsSection from "@/components/watch/comments/CommentsSection";
-import VideoPlayer from "@/components/watch/VideoPlayer";
+import dynamic from "next/dynamic";
+const VideoPlayer = dynamic(() => import("@/components/watch/VideoPlayer"), { ssr: false });
 import { toggleSubscribe } from "@/app/api/services/channelServices";
 import Link from "next/link";
 

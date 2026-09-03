@@ -1,7 +1,7 @@
 import { startSession } from "mongoose";
 import { videoReactionType } from "../../../Common/index.js";
 import { uploadImageOnCloudinary, uploadVideoOnCloudinary } from "../../../Common/Services/cloudinary.service.js";
-import { SubscriptionModel, VideoModel, VideoReactionModel, VideoViewModel } from "../../../DB/Models/index.js";
+import { HistoryModel, SubscriptionModel, VideoModel, VideoReactionModel, VideoViewModel } from "../../../DB/Models/index.js";
 
 
 
@@ -177,20 +177,34 @@ export const addView = async (req, res) => {
     if (!video) return res.status(404).json({ message: "video not found" });
 
     const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    console.log(ipAddress);
+    // console.log(ipAddress);
     const userId = req.loggedInUser?.user?._id;
 
     let existingView;
     if (userId) {
         existingView = await VideoViewModel.findOne({ video: videoId, user: userId });
+
     } else {
         existingView = await VideoViewModel.findOne({ video: videoId, ipAddress });
+    }
+
+    if (userId) {
+        const watchHistory = await HistoryModel.findOne({ video: videoId, user: userId });
+        
+        if (!watchHistory) {
+            await HistoryModel.create({
+                video: videoId,
+                user: userId
+            });
+        } else {
+            watchHistory.updatedAt = Date.now();
+            await watchHistory.save();
+        }
     }
 
     if (existingView) {
         return res.status(200).json({ message: "already viewed" });
     }
-
     await VideoViewModel.create({
         video: videoId,
         user: userId || null,

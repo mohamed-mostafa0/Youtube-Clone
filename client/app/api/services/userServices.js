@@ -7,3 +7,15 @@ export const getLikedVideos = async () => {
 export const getSubscribedVideos = async () => {
     return API.get("/user/subscribed-videos");
 };
+
+export const getHistory = async () => {
+    return API.get("/user/history");
+};
+
+export const deleteHistory = async () => {
+    return API.delete("/user/delete-history");
+};
+
+export const deleteVideoFromHistory = async (videoId) => {
+    return API.delete(`/user/delete-from-history/${videoId}`);
+};
