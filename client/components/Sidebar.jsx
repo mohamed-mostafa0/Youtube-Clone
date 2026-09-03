@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { 
   MdHomeFilled, 
   MdOutlineExplore, 
@@ -19,11 +20,12 @@ import GoogleLoginButton from "./GoogleLoginButton";
 export default function Sidebar({ isOpen }) {
   const {subscribedChannelsData , isLoading} = useContext(subscriptionContext);
   const { user } = useAuth();
+  const pathname = usePathname();
   
   const mainLinks = [
-    { icon: <MdHomeFilled className="w-6 h-6" />, label: "Home" },
+    { icon: <MdHomeFilled className="w-6 h-6" />, label: "Home", href: "/" },
     { icon: <MdOutlineExplore className="w-6 h-6" />, label: "Shorts" },
-    { icon: <MdOutlineSubscriptions className="w-6 h-6" />, label: "Subscriptions" },
+    { icon: <MdOutlineSubscriptions className="w-6 h-6" />, label: "Subscriptions", href: "/feed/subscriptions" },
   ];
 
   const secondaryLinks = [
@@ -61,12 +63,15 @@ export default function Sidebar({ isOpen }) {
     >
       <div className="flex flex-col py-3">
         <div className="px-3 pb-3 border-b border-gray-200 dark:border-gray-800">
-          {mainLinks.map((link, idx) => (
-            <div
+          {mainLinks.map((link, idx) => {
+            const Wrapper = link.href ? Link : 'div';
+            return (
+            <Wrapper
               key={idx}
+              href={link.href}
               className={`flex items-center px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-[#272727] ${
                 isOpen ? "flex-row gap-5" : "flex-col gap-1 py-4 px-1 justify-center"
-              } ${idx === 0 ? "bg-gray-100 dark:bg-[#272727]" : ""}`}
+              } ${pathname === link.href ? "bg-gray-100 dark:bg-[#272727]" : ""}`}
             >
               <div className="flex-shrink-0 text-gray-900 dark:text-gray-100">
                 {link.icon}
@@ -78,8 +83,9 @@ export default function Sidebar({ isOpen }) {
               >
                 {link.label}
               </span>
-            </div>
-          ))}
+            </Wrapper>
+            );
+          })}
         </div>
 
         {isOpen && (
@@ -93,7 +99,9 @@ export default function Sidebar({ isOpen }) {
                     <Wrapper
                       key={idx}
                       href={link.href}
-                      className="flex items-center gap-5 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-[#272727]"
+                      className={`flex items-center gap-5 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-[#272727] ${
+                        pathname === link.href ? "bg-gray-100 dark:bg-[#272727]" : ""
+                      }`}
                     >
                       <div className="flex-shrink-0 text-gray-900 dark:text-gray-100">
                         {link.icon}
@@ -118,7 +126,9 @@ export default function Sidebar({ isOpen }) {
                     {subscribedChannelsData.map((channel) => (
                       <Link
                         key={channel._id}
-                        className="flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-[#272727]"
+                        className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-[#272727] ${
+                          pathname === `/${channel.uniqueChannelName}` ? "bg-gray-100 dark:bg-[#272727]" : ""
+                        }`}
                         href={`/${channel.uniqueChannelName}`}
                       >
                         <ChannelAvatar url={channel.logoUrl} name={channel.channelName} size="sm" />

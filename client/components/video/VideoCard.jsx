@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { MdCheckCircle, MdMoreVert } from "react-icons/md";
 import { formatDistanceToNow } from "date-fns";
+import ChannelAvatar from "../ChannelAvatar";
 
 export default function VideoCard({ video , logo , channelName }) {
 
@@ -18,20 +19,27 @@ export default function VideoCard({ video , logo , channelName }) {
           />
         ) : null}
         <div className="absolute bottom-1.5 right-1.5 bg-black/80 text-white text-xs font-medium px-1.5 py-0.5 rounded">
-          {video.duration}
+          {(video.duration)?.toFixed(2)}
         </div>
       </div>
 
-      <div className="flex gap-3 pr-4 relative">
-        
+      <div className="flex gap-3 pr-4 relative mt-3">
+        <div className="flex-shrink-0">
+          <ChannelAvatar 
+            url={video.owner?.logoUrl } 
+            name={video.owner?.channelName} 
+            size="md" 
+          />
+        </div>
+
         <div className="flex flex-col overflow-hidden">
-          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 line-clamp-2 leading-tight">
+          <h3 className="text-base font-medium text-gray-900 dark:text-gray-100 line-clamp-2 leading-tight">
             {video.title}
           </h3>
           
           <div className="text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-1">
-            <span className="hover:text-gray-900 dark:hover:text-white transition-colors">
-              {video.channelName}
+            <span className="hover:text-gray-900  dark:hover:text-white transition-colors line-clamp-1">
+              {video.owner?.channelName}
             </span>
             {video.verified && (
               <MdCheckCircle className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />

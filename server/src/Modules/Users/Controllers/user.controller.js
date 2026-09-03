@@ -13,6 +13,7 @@ userController.put("/update-channel" , authenticationMiddleware,upload().fields(
     {name:"channelCover" , maxCount:1}
 ]) , userServices.updateChannel)
 userController.get("/liked-videos" , authenticationMiddleware , userServices.getLikedVideos)
+userController.get("/subscribed-videos" , authenticationMiddleware , userServices.getSubscribedChannelsVideos)
 
 
 

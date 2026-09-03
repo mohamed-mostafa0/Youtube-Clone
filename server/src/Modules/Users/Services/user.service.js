@@ -187,3 +187,20 @@ export const getLikedVideos = async(req , res)=>{
 
     return res.status(200).json({message:"Liked videos fetched successfully" , videos:likedVideo})
 }
+
+
+
+export const getSubscribedChannelsVideos = async(req , res)=>{
+    const {user} = req.loggedInUser
+
+    const subscribedChannels = await SubscriptionModel.find({subscriber:user._id}).select("channel -_id")
+
+    const channelIds = subscribedChannels.map(sub => sub.channel)
+
+    const videos = await VideoModel.find({
+        owner:{$in:channelIds},
+        status:"published"
+    }).sort({createdAt:-1}).populate("owner" , "channelName logoUrl uniqueChannelName")
+
+    return res.status(200).json({message:"Subscribed channels videos fetched successfully" , videos})
+}
