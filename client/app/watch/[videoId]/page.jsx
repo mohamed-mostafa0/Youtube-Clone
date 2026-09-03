@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "@/context/AuthContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
-import { getVideoById, reactToVideo } from "@/app/api/services/videoServices";
+import { getVideoById, reactToVideo, addView } from "@/app/api/services/videoServices";
+import { formatViews } from "@/helpers/video";
 import Image from "next/image";
 import { MdThumbUp, MdThumbDown, MdShare, MdDownload, MdMoreHoriz, MdCheckCircle } from "react-icons/md";
 import { formatDistanceToNow } from "date-fns";
@@ -19,6 +20,14 @@ import Link from "next/link";
 export default function WatchPage() {
   const { videoId } = useParams();
   const [copied, setCopied] = useState(false);
+  const viewCounted = useRef(false);
+
+  const handleViewThreshold = () => {
+    if (videoId && !viewCounted.current) {
+      viewCounted.current = true;
+      addView(videoId).catch(console.error);
+    }
+  };
 
   const queryClient = useQueryClient();
 
@@ -93,7 +102,7 @@ export default function WatchPage() {
         <div className="flex-1 xl:w-[70%] xl:max-w-5xl">
           
           <div className="w-full aspect-video  bg-black rounded-xl overflow-hidden mb-4 shadow-sm relative">
-            <VideoPlayer src={video.videoUrl} poster={video.thumbnailUrl} />
+            <VideoPlayer src={video.videoUrl} poster={video.thumbnailUrl} onViewThreshold={handleViewThreshold} />
           </div>
 
           <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3 line-clamp-2">
@@ -162,7 +171,7 @@ export default function WatchPage() {
 
           <div className="bg-gray-100 dark:bg-[#272727] rounded-xl p-3 sm:p-4 hover:bg-gray-200 dark:hover:bg-[#3f3f3f] transition-colors mb-6">
             <div className="flex gap-2 text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
-              <span>{video.views || 0} views</span>
+              <span>{formatViews(video.views)} views</span>
               <span>•</span>
               <span>{video.createdAt ? formatDistanceToNow(new Date(video.createdAt), { addSuffix: true }) : "Unknown date"}</span>
             </div>

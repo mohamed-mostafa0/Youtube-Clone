@@ -10,5 +10,13 @@ export const formatDuration = (duration) => {
   };
 
 export const timeAgo = (date)=>{
-    formatDistanceToNow(new Date(date), {addSuffix: true})
+    return formatDistanceToNow(new Date(date), {addSuffix: true})
 }
+
+export const formatViews = (views) => {
+    if (!views && views !== 0) return "0";
+    return new Intl.NumberFormat('en-US', {
+        notation: 'compact',
+        maximumFractionDigits: 1
+    }).format(views);
+};

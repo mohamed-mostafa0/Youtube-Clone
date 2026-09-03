@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { MdCheckCircle, MdMoreVert } from "react-icons/md";
 import { formatDistanceToNow } from "date-fns";
-import { formatDuration, timeAgo } from "@/helpers/video";
+import { formatDuration, timeAgo, formatViews } from "@/helpers/video";
 
 export default function HorizontalVideoCard({ video, index }) {
   // const formatDuration = (duration) => {
@@ -55,7 +55,7 @@ export default function HorizontalVideoCard({ video, index }) {
             )}
           </div>
           <div className="text-xs text-gray-600 dark:text-gray-400 mt-2 flex flex-wrap items-center gap-x-1">
-            <span className="">{video.views || 0} views</span>
+            <span className="">{formatViews(video.views)} views</span>
             <span className="mx-1 text-[10px]">•</span>
             {video.createdAt && (
              <span>{timeAgo(video.createdAt)}</span>

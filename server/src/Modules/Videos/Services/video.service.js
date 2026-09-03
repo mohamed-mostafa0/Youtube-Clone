@@ -1,7 +1,7 @@
 import { startSession } from "mongoose";
 import { videoReactionType } from "../../../Common/index.js";
 import { uploadImageOnCloudinary, uploadVideoOnCloudinary } from "../../../Common/Services/cloudinary.service.js";
-import { SubscriptionModel, VideoModel, VideoReactionModel } from "../../../DB/Models/index.js";
+import { SubscriptionModel, VideoModel, VideoReactionModel, VideoViewModel } from "../../../DB/Models/index.js";
 
 
 
@@ -168,4 +168,38 @@ export const reactionToVideo = async (req, res) => {
     }
 
 }
+
+export const addView = async (req, res) => {
+    const { videoId } = req.params;
+    if (!videoId) return res.status(400).json({ message: "video id is required" });
+
+    const video = await VideoModel.findById(videoId);
+    if (!video) return res.status(404).json({ message: "video not found" });
+
+    const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    console.log(ipAddress);
+    const userId = req.loggedInUser?.user?._id;
+
+    let existingView;
+    if (userId) {
+        existingView = await VideoViewModel.findOne({ video: videoId, user: userId });
+    } else {
+        existingView = await VideoViewModel.findOne({ video: videoId, ipAddress });
+    }
+
+    if (existingView) {
+        return res.status(200).json({ message: "already viewed" });
+    }
+
+    await VideoViewModel.create({
+        video: videoId,
+        user: userId || null,
+        ipAddress: ipAddress
+    });
+
+    video.views += 1;
+    await video.save();
+
+    return res.status(200).json({ message: "view added successfully" });
+};
 

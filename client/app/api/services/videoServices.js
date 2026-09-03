@@ -22,3 +22,7 @@ export const getVideoById = (videoId) => {
 export const reactToVideo = ({videoId, type}) => {
     return API.post(`/video/${videoId}/react`, { type });
 };
+
+export const addView = (videoId) => {
+    return API.put(`/video/${videoId}/view`);
+};

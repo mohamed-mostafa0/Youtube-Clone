@@ -3,11 +3,17 @@ import Link from "next/link";
 import { MdCheckCircle, MdMoreVert } from "react-icons/md";
 import { formatDistanceToNow } from "date-fns";
 import ChannelAvatar from "../ChannelAvatar";
+import { formatViews } from "@/helpers/video";
+import {motion} from "framer-motion"
 
 export default function VideoCard({ video , logo , channelName }) {
 
   return (
-    <Link href={`/watch/${video._id}`} className="flex flex-col gap-3 group cursor-pointer w-full">
+    <motion.div
+      className="relative z-0 hover:z-10 p-2 -m-3 hover:bg-gray-100 dark:hover:bg-[#272727] rounded-2xl transition-colors w-full group"
+    >
+
+    <Link href={`/watch/${video._id}`} className="flex flex-col gap-3 cursor-pointer w-full">
       <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-gray-200 dark:bg-gray-800">
         {video.thumbnailUrl ? (
           <Image
@@ -47,7 +53,7 @@ export default function VideoCard({ video , logo , channelName }) {
           </div>
           
           <div className="text-sm text-gray-600 dark:text-gray-400 flex items-center">
-            <span>{video.views} views</span>
+            <span>{formatViews(video.views)} views</span>
             <span className="mx-1 text-[10px]">•</span>
             {video.createdAt &&
             
@@ -61,5 +67,7 @@ export default function VideoCard({ video , logo , channelName }) {
         </button>
       </div>
     </Link>
+    </motion.div>
+
   );
 }

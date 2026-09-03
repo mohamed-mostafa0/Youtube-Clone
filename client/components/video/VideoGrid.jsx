@@ -49,18 +49,16 @@ export default function VideoGrid() {
     );
   }
 
-  // Flatten the pages array into a single array of videos
   const allVideos = data?.pages.flatMap(page => page.videos) || [];
 
   return (
     <div className="flex flex-col mb-10">
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 gap-y-8 p-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3  gap-y-8 p-4">
         {allVideos.map((video) => (
           <VideoCard key={video._id || video.id} video={video} />
         ))}
       </div>
 
-      {/* Loading Skeletons at the bottom while fetching next page */}
       {isFetchingNextPage && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 gap-y-8 p-4 mt-2">
           {[...Array(3)].map((_, i) => (
@@ -69,7 +67,6 @@ export default function VideoGrid() {
         </div>
       )}
 
-      {/* Intersection Observer target */}
       <div ref={ref} className="h-10 w-full" />
     </div>
   );

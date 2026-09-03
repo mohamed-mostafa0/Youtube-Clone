@@ -3,7 +3,7 @@ import Plyr from 'plyr';
 import 'plyr/dist/plyr.css';
 import Hls from 'hls.js';
 
-export default function VideoPlayer({ src, poster }) {
+export default function VideoPlayer({ src, poster, onPlay, onViewThreshold }) {
   const videoRef = useRef(null);
   const playerRef = useRef(null);
 
@@ -42,6 +42,21 @@ export default function VideoPlayer({ src, poster }) {
         };
 
         playerRef.current = new Plyr(video, defaultOptions);
+        if (onPlay) {
+          playerRef.current.on('playing', onPlay);
+        }
+        if (onViewThreshold) {
+          let thresholdTriggered = false;
+          playerRef.current.on('timeupdate', (e) => {
+            const player = e.detail.plyr;
+            if (player.currentTime >= 10) {
+              if (!thresholdTriggered) {
+                thresholdTriggered = true;
+                onViewThreshold();
+              }
+            }
+          });
+        }
       });
 
       function updateQuality(newQuality) {
@@ -67,6 +82,23 @@ export default function VideoPlayer({ src, poster }) {
         autoplay: true,
       });
       video.src = src;
+
+      if (onPlay) {
+        playerRef.current.on('playing', onPlay);
+      }
+      
+      if (onViewThreshold) {
+        let thresholdTriggered = false;
+        playerRef.current.on('timeupdate', (e) => {
+          const player = e.detail.plyr;
+          if (player.currentTime >= 10) {
+            if (!thresholdTriggered) {
+              thresholdTriggered = true;
+              onViewThreshold();
+            }
+          }
+        });
+      }
 
       return () => {
         if (playerRef.current) {
