@@ -10,14 +10,15 @@ import {
   MdThumbUpOffAlt 
 } from "react-icons/md";
 import ChannelAvatar from "./ChannelAvatar";
-import { useQuery } from "@tanstack/react-query";
-import { getSubscribedChannels } from "@/app/api/services/channelServices";
 import SubscribtionLoading from "./sidebar/SubscribtionLoading";
 import { useContext } from "react";
 import { subscriptionContext } from "@/context/SubscribtionProvider";
+import { useAuth } from "@/context/AuthContext";
+import GoogleLoginButton from "./GoogleLoginButton";
 
 export default function Sidebar({ isOpen }) {
-  const {subscribedChannelsData , isLoading} = useContext(subscriptionContext)  
+  const {subscribedChannelsData , isLoading} = useContext(subscriptionContext);
+  const { user } = useAuth();
   
   const mainLinks = [
     { icon: <MdHomeFilled className="w-6 h-6" />, label: "Home" },
@@ -30,7 +31,7 @@ export default function Sidebar({ isOpen }) {
     { icon: <MdHistory className="w-6 h-6" />, label: "History" },
     { icon: <MdOutlineOndemandVideo className="w-6 h-6" />, label: "Your videos" },
     { icon: <MdOutlineWatchLater className="w-6 h-6" />, label: "Watch later" },
-    { icon: <MdThumbUpOffAlt className="w-6 h-6" />, label: "Liked videos" },
+    { icon: <MdThumbUpOffAlt className="w-6 h-6" />, label: "Liked videos", href: "/liked-videos" },
   ];
 
   const exploreLinks = [
@@ -83,43 +84,60 @@ export default function Sidebar({ isOpen }) {
 
         {isOpen && (
           <>
-            <div className="px-3 py-3 border-b border-gray-200 dark:border-gray-800">
-              {secondaryLinks.map((link, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center gap-5 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-[#272727]"
-                >
-                  <div className="flex-shrink-0 text-gray-900 dark:text-gray-100">
-                    {link.icon}
-                  </div>
-                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {link.label}
-                  </span>
+            {user ? (
+              <>
+                <div className="px-3 py-3 border-b border-gray-200 dark:border-gray-800">
+                  {secondaryLinks.map((link, idx) => {
+                    const Wrapper = link.href ? Link : 'div';
+                    return (
+                    <Wrapper
+                      key={idx}
+                      href={link.href}
+                      className="flex items-center gap-5 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-[#272727]"
+                    >
+                      <div className="flex-shrink-0 text-gray-900 dark:text-gray-100">
+                        {link.icon}
+                      </div>
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {link.label}
+                      </span>
+                    </Wrapper>
+                    )
+                  })}
                 </div>
-              ))}
-            </div>
 
 
-            {isLoading ? (
+                {isLoading ? (
 
-              <SubscribtionLoading/>
-            ) : subscribedChannelsData?.length > 0 && (
-              <div className="px-3 py-3 border-b border-gray-200 dark:border-gray-800">
-                <h3 className="px-3 py-2 text-base font-semibold text-gray-900 dark:text-gray-100">
-                  Subscriptions
-                </h3>
-                {subscribedChannelsData.map((channel) => (
-                  <Link
-                    key={channel._id}
-                    className="flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-[#272727]"
-                    href={`/${channel.uniqueChannelName}`}
-                  >
-                    <ChannelAvatar url={channel.logoUrl} name={channel.channelName} size="sm" />
-                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                      {channel.channelName}
-                    </span>
-                  </Link>
-                ))}
+                  <SubscribtionLoading/>
+                ) : subscribedChannelsData?.length > 0 && (
+                  <div className="px-3 py-3 border-b border-gray-200 dark:border-gray-800">
+                    <h3 className="px-3 py-2 text-base font-semibold text-gray-900 dark:text-gray-100">
+                      Subscriptions
+                    </h3>
+                    {subscribedChannelsData.map((channel) => (
+                      <Link
+                        key={channel._id}
+                        className="flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-[#272727]"
+                        href={`/${channel.uniqueChannelName}`}
+                      >
+                        <ChannelAvatar url={channel.logoUrl} name={channel.channelName} size="sm" />
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                          {channel.channelName}
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="px-8 py-5 border-b border-gray-200 dark:border-gray-800 flex flex-col gap-4 items-start">
+                <p className="text-[14.5px] text-[#0f0f0f] dark:text-[#f1f1f1] leading-relaxed">
+                  Sign in to like <br/> videos, comment, and subscribe.
+                </p>
+                <div className="mt-1">
+                  <GoogleLoginButton />
+                </div>
               </div>
             )}
 

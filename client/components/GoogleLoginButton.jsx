@@ -23,14 +23,16 @@ export default function GoogleLoginButton() {
   }
 
   return (
-    <GoogleLogin
-      onSuccess={handleSuccess}
-      onError={handleError}
-      theme="outline"
-      size="large"
-      text="signin_with"
-      shape="rectangular"
-      width="200"
-    />
+    <div className="w-fit">
+      <GoogleLogin
+        onSuccess={handleSuccess}
+        onError={handleError}
+        theme="outline"
+        size="large"
+        text="signin"
+        shape="pill"
+        width="120"
+      />
+    </div>
   );
 }

@@ -168,3 +168,22 @@ export const updateChannel = async(req , res)=>{
 
     return res.status(200).json({message:"Channel updated successfully" , channel:user})
 }
+
+
+export const getLikedVideos = async(req , res)=>{
+    const {user} = req.loggedInUser
+
+    const likedVideo = await VideoReactionModel.find({
+        user:user._id,
+        type:"like"
+    }).populate({
+        path:"video",
+        select:"title channelName createdAt videoUrl thumbnailUrl duration",
+        populate:{
+            path:"owner",
+            select:"channelName"
+        }
+    })
+
+    return res.status(200).json({message:"Liked videos fetched successfully" , videos:likedVideo})
+}
