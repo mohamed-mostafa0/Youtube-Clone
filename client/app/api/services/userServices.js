@@ -19,3 +19,11 @@ export const deleteHistory = async () => {
 export const deleteVideoFromHistory = async (videoId) => {
     return API.delete(`/user/delete-from-history/${videoId}`);
 };
+
+export const getNotifications = async (page = 1, limit = 20) => {
+    return API.get(`/user/notifications?page=${page}&limit=${limit}`);
+};
+
+export const markNotificationAsRead = async (notificationId) => {
+    return API.patch(`/user/notifications/${notificationId}/read`);
+};

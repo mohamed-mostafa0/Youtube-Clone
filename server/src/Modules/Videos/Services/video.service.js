@@ -1,7 +1,8 @@
 import { startSession } from "mongoose";
 import { videoReactionType } from "../../../Common/index.js";
 import { uploadImageOnCloudinary, uploadVideoOnCloudinary } from "../../../Common/Services/cloudinary.service.js";
-import { HistoryModel, SubscriptionModel, VideoModel, VideoReactionModel, VideoViewModel } from "../../../DB/Models/index.js";
+import { HistoryModel, NotificationModel, SubscriptionModel, VideoModel, VideoReactionModel, VideoViewModel } from "../../../DB/Models/index.js";
+import { getIO } from "../../../Utils/socket.js";
 
 
 
@@ -111,62 +112,87 @@ export const getVideo = async (req, res) => {
 }
 
 export const reactionToVideo = async (req, res) => {
+    const { user } = req.loggedInUser;
+    const { videoId } = req.params;
+    const { type } = req.body;
 
-    const { user } = req.loggedInUser
-    const { videoId } = req.params
-    const { type } = req.body
+    if (!Object.values(videoReactionType).includes(type)) return res.status(400).json({ message: "invalid reaction type" });
+    if (!videoId) return res.status(400).json({ message: "video id is required" });
 
-    if (!Object.values(videoReactionType).includes(type)) return res.status(400).json({ message: "invalid reaction type" })
-    if(!videoId) return res.status(400).json({ message: "video id is required" })
+    const video = await VideoModel.findById(videoId);
+    if (!video) return res.status(404).json({ message: "video not found" });
 
-    const video = await VideoModel.findById(videoId)
-    if (!video) return res.status(404).json({ message: "video not found" })
+    const session = await startSession();
 
-    const session = await startSession()
-
-    try{
-        session.startTransaction()
+    try {
+        session.startTransaction();
+        
+        const previousReaction = await VideoReactionModel.findOne({ user: user._id, video: videoId }).session(session);
+        
         let message;
-
-        const previousReaction = await VideoReactionModel.findOne({ user: user._id, video: videoId }).session(session)
+        let shouldNotify = false;
 
         if (previousReaction) {
             if (previousReaction.type === type) {
-                await VideoReactionModel.findByIdAndDelete(previousReaction._id , {session})
-                await VideoModel.findByIdAndUpdate(videoId, { $inc: { [`${type}s`]: -1 } } ,{session})
-                message = "reaction removed successfully"
+                await VideoReactionModel.findByIdAndDelete(previousReaction._id, { session });
+                await VideoModel.findByIdAndUpdate(videoId, { $inc: { [`${type}s`]: -1 } }, { session });
+                if(type === 'like'){
+                    await NotificationModel.findOneAndDelete({
+                        sender: user._id,
+                        recipient: video.owner,
+                        video: videoId,
+                        type: 'like'
+                    }, { session });
+                }
+                message = "reaction removed successfully";
             } else {
-                await VideoReactionModel.findByIdAndUpdate(previousReaction._id, { type } ,{session})
+                await VideoReactionModel.findByIdAndUpdate(previousReaction._id, { type }, { session });
                 await VideoModel.findByIdAndUpdate(videoId, {
-                    $inc: {
-                        [`${previousReaction.type}s`]: -1,
-                        [`${type}s`]: 1
-                    }
-                }, {session})
-                message = "reaction updated successfully"
+                    $inc: { [`${previousReaction.type}s`]: -1, [`${type}s`]: 1 }
+                }, { session });
+                message = "reaction updated successfully";
+                shouldNotify = type === 'like';
             }
-        }else{
-            await VideoReactionModel.create([{
-                user: user._id,
-                video: videoId,
-                type
-            }], {session})
-            await VideoModel.findByIdAndUpdate(videoId, { $inc: { [`${type}s`]: 1 } } ,{session})
-            message = "reaction added successfully"
+        } else {
+            await VideoReactionModel.create([{ user: user._id, video: videoId, type }], { session });
+            await VideoModel.findByIdAndUpdate(videoId, { $inc: { [`${type}s`]: 1 } }, { session });
+            message = "reaction added successfully";
+            shouldNotify = type === 'like';
         }
 
-        await session.commitTransaction()
+        const isNotLikingOwnVideo = video.owner.toString() !== user._id.toString();
+        
+        if (shouldNotify && isNotLikingOwnVideo) {
+            await NotificationModel.create([{
+                type: 'like',
+                recipient: video.owner,
+                sender: user._id,
+                video: videoId
+            }], { session });
+        }
+
+        await session.commitTransaction();
+
+        if (shouldNotify && isNotLikingOwnVideo) {
+            try {
+                getIO().to(video.owner.toString()).emit("notification", {
+                    message: `${user.channelName} liked your video "${video.title}"`,
+                    type: "like",
+                    videoId: video._id
+                });
+            } catch (err) {
+                console.error("Socket notification error:", err.message);
+            }
+        }
 
         return res.status(200).json({ message });
 
-    }
-    catch (error) {
-        await session.abortTransaction()
-        return res.status(500).json({ message: "something went wrong" })
+    } catch (error) {
+        await session.abortTransaction();
+        return res.status(500).json({ message: "something went wrong" });
     } finally {
-        session.endSession()
+        session.endSession();
     }
-
 }
 
 export const addView = async (req, res) => {
@@ -216,4 +242,20 @@ export const addView = async (req, res) => {
 
     return res.status(200).json({ message: "view added successfully" });
 };
+
+
+export const deleteVideo = async (req, res) => {
+
+    const { videoId } = req.params
+    const { _id } = req.loggedInUser.user
+
+    const video = await VideoModel.findById(videoId)
+    if (!video) return res.status(404).json({ message: "video not found" })
+
+    if (video.owner.toString() !== _id.toString()) return res.status(403).json({ message: "you can not delete this video" })
+
+    await VideoModel.findByIdAndDelete(videoId)
+
+    return res.status(200).json({ message: "video deleted successfully" })
+}
 

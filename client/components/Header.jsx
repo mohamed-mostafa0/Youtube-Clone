@@ -11,6 +11,7 @@ import ChannelAvatar from "./ChannelAvatar";
 import GoogleLoginButton from "./GoogleLoginButton";
 import { useAuth } from "../context/AuthContext";
 import Link from "next/link";
+import NotificationsDropdown from "./NotificationsDropdown";
 
 
 export default function Header({ onMenuClick }) {
@@ -78,9 +79,8 @@ export default function Header({ onMenuClick }) {
         <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-[#272727] transition-colors hidden sm:block">
           <MdVideoCall className="w-6 h-6 text-gray-900 dark:text-gray-100" />
         </button>
-        <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-[#272727] transition-colors hidden sm:block">
-          <MdNotificationsNone className="w-6 h-6 text-gray-900 dark:text-gray-100" />
-        </button>
+        
+        {isAuthenticated && user && <NotificationsDropdown />}
 
         {isAuthenticated && user ? (
           <div className="relative" ref={dropdownRef}>

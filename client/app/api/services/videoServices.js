@@ -26,3 +26,7 @@ export const reactToVideo = ({videoId, type}) => {
 export const addView = (videoId) => {
     return API.put(`/video/${videoId}/view`);
 };
+
+export const deleteVideo = (videoId) => {
+    return API.delete(`/video/${videoId}`);
+};

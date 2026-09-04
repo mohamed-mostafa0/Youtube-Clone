@@ -1,5 +1,5 @@
 import { deleteResourceOnCloudinary, uploadImageOnCloudinary } from "../../../Common/index.js"
-import { SubscriptionModel, userModel, VideoModel, CommentModel, VideoReactionModel, VideoViewModel, HistoryModel } from "../../../DB/Models/index.js"
+import { SubscriptionModel, userModel, VideoModel, CommentModel, VideoReactionModel, VideoViewModel, HistoryModel, NotificationModel } from "../../../DB/Models/index.js"
 import mongoose from  "mongoose"
 
 
@@ -178,7 +178,7 @@ export const getLikedVideos = async(req , res)=>{
         type:"like"
     }).populate({
         path:"video",
-        select:"title channelName createdAt videoUrl thumbnailUrl duration",
+        select:"title channelName createdAt videoUrl thumbnailUrl duration views",
         populate:{
             path:"owner",
             select:"channelName"
@@ -266,3 +266,43 @@ export const deleteVideoFromHistory = async(req , res)=>{
 
     return res.status(200).json({message:"Video deleted from history successfully"})
 }
+
+export const getNotifications = async (req, res) => {
+    const { _id } = req.loggedInUser.user;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const notifications = await NotificationModel.find({ recipient: _id })
+        .populate("sender", "channelName logoUrl")
+        .populate("video", "title thumbnailUrl")
+        // .populate("comment" ,"channelName content")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean();
+
+    const unreadCount = await NotificationModel.countDocuments({ recipient: _id, isRead: false });
+
+    return res.status(200).json({ notifications, unreadCount });
+};
+
+export const markNotificationAsRead = async (req, res) => {
+    const { notificationId } = req.params;
+    const { _id } = req.loggedInUser.user;
+
+    const notification = await NotificationModel.findById(notificationId);
+    
+    if (!notification) {
+        return res.status(404).json({ message: "Notification not found" });
+    }
+
+    if (notification.recipient.toString() !== _id.toString()) {
+        return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    notification.isRead = true;
+    await notification.save();
+
+    return res.status(200).json({ message: "Marked as read successfully" });
+};
