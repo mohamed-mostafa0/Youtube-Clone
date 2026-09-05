@@ -27,6 +27,31 @@ export const uploadVideo = async (req, res) => {
     res.status(201).json({ message: "Video is processing...", uploadedVideo });
 
     processVideoUpload(uploadedVideo._id, files).catch(console.error);
+
+    const users = await SubscriptionModel.find({
+        channel: _id
+    }).distinct("subscriber");
+
+    const notificationDocs = users.map(subscriberId => ({
+        recipient: subscriberId,
+        sender: _id,
+        type: "upload",
+        video: uploadedVideo._id
+    }));
+
+    if (notificationDocs.length > 0) {
+        await NotificationModel.insertMany(notificationDocs);
+    }
+
+    const uploaderName = req.loggedInUser.user.uniqueChannelName;
+    users.forEach(subscriberId => {
+        sendNotification(subscriberId, {
+            message: `${uploaderName} uploaded a new video`,
+            type: "upload",
+            sender: uploaderName,
+            video: uploadedVideo._id
+        });
+    });
 }
 
 const processVideoUpload = async (videoId, files) => {
