@@ -94,7 +94,7 @@ export default function NotificationsDropdown() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-12 w-[360px] bg-white dark:bg-[#282828] rounded-xl shadow-lg border border-gray-200 dark:border-[#3f3f3f] py-2 z-50 overflow-hidden">
+        <div className="absolute right-0 top-12 w-[500px] bg-white dark:bg-[#282828] rounded-xl shadow-lg border border-gray-200 dark:border-[#3f3f3f] py-2 z-50 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-[#3f3f3f]">
             <span className="text-base font-semibold text-gray-900 dark:text-gray-100">
               Notifications

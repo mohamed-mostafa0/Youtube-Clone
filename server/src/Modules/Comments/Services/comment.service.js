@@ -1,6 +1,7 @@
-import { CommentModel, CommentReactionModel, VideoModel } from "../../../DB/Models/index.js"
+import { CommentModel, CommentReactionModel, NotificationModel, VideoModel } from "../../../DB/Models/index.js"
 import { videoReactionType, videoVisibility } from "../../../Common/index.js"
 import mongoose from "mongoose";
+import { getIO } from "../../../Utils/index.js";
 
 
 
@@ -10,24 +11,58 @@ export const addComment = async(req, res) => {
         const {content , parentCommentId} = req.body;
 
         if (!content || !content.trim()) return res.status(400).json({message: "Comment can not be empty"});
-
         if (content.length > 2000) return res.status(400).json({message: "Comment is too long"});
 
-        const video = await VideoModel.findById(videoId);
+        const video = await VideoModel.findById(videoId)
         if (!video) return res.status(404).json({message: "Video Not Found"});
 
         if(video.visibility === videoVisibility.PRIVATE) return res.status(403).json({message:"You can not access this video"})
-
         if(video.commentsAllow == false) return res.status(403).json({message:"Comments are disabled for this video"})
-        
 
-        const comment = await CommentModel.create({
+        let mainComment = null;
+        if (parentCommentId) {
+            mainComment = await CommentModel.findById(parentCommentId);
+            if (!mainComment) return res.status(404).json({message: "Comment Not Found"});
+        }
+
+        if(parentCommentId && mainComment.owner.toString() !== user._id.toString()){
+            getIO().to(mainComment.owner.toString()).emit("notification" , {
+                message :`${user.uniqueChannelName} replied to your comment`,
+                type: "comment",
+                sender : user.uniqueChannelName,
+                video: videoId  
+            })
+            await NotificationModel.create({
+                type:"comment",
+                recipient:mainComment.owner,
+                sender:user._id,
+                video:videoId,
+                comment:parentCommentId
+            })
+        }
+
+        if(!parentCommentId && video.owner.toString() !== user._id.toString()){
+            getIO().to(video.owner.toString()).emit("notification" , {
+                message :`${user.uniqueChannelName} commented on your video "${video.title}"`,
+                type: "comment",
+                sender : user.uniqueChannelName,
+                video: videoId  
+            })
+            
+            await NotificationModel.create({
+                type:"comment",
+                recipient:video.owner,
+                sender:user._id,
+                video:videoId,
+            })
+        }
+
+        await CommentModel.create({
             content,
             owner: user._id,
             video: video._id,
             parentComment: parentCommentId || null
         });
-
 
         return res.status(201).json({message: "Comment Added Successfully"});
 }

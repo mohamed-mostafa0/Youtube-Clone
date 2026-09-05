@@ -2,13 +2,13 @@ import { startSession } from "mongoose";
 import { videoReactionType } from "../../../Common/index.js";
 import { uploadImageOnCloudinary, uploadVideoOnCloudinary } from "../../../Common/Services/cloudinary.service.js";
 import { HistoryModel, NotificationModel, SubscriptionModel, VideoModel, VideoReactionModel, VideoViewModel } from "../../../DB/Models/index.js";
-import { getIO } from "../../../Utils/socket.js";
+import { getIO } from "../../../Utils/index.js";
 
 
 
 export const uploadVideo = async (req, res) => {
     const { files } = req
-    const { title, description, category, visibility ,commentsAllow} = req.body
+    const { title, description, category, visibility, commentsAllow } = req.body
     const { user: { _id } } = req.loggedInUser
 
     if (!files.video[0].mimetype.startsWith("video/")) return res.status(400).json({ message: "invalid video file" })
@@ -126,9 +126,9 @@ export const reactionToVideo = async (req, res) => {
 
     try {
         session.startTransaction();
-        
+
         const previousReaction = await VideoReactionModel.findOne({ user: user._id, video: videoId }).session(session);
-        
+
         let message;
         let shouldNotify = false;
 
@@ -136,7 +136,7 @@ export const reactionToVideo = async (req, res) => {
             if (previousReaction.type === type) {
                 await VideoReactionModel.findByIdAndDelete(previousReaction._id, { session });
                 await VideoModel.findByIdAndUpdate(videoId, { $inc: { [`${type}s`]: -1 } }, { session });
-                if(type === 'like'){
+                if (type === 'like') {
                     await NotificationModel.findOneAndDelete({
                         sender: user._id,
                         recipient: video.owner,
@@ -161,7 +161,7 @@ export const reactionToVideo = async (req, res) => {
         }
 
         const isNotLikingOwnVideo = video.owner.toString() !== user._id.toString();
-        
+
         if (shouldNotify && isNotLikingOwnVideo) {
             await NotificationModel.create([{
                 type: 'like',
@@ -216,7 +216,7 @@ export const addView = async (req, res) => {
 
     if (userId) {
         const watchHistory = await HistoryModel.findOne({ video: videoId, user: userId });
-        
+
         if (!watchHistory) {
             await HistoryModel.create({
                 video: videoId,
