@@ -69,3 +69,11 @@ export const getIO = () => {
     }
     return io;
 };
+
+export const sendNotification = (recipient , notificationData)=>{
+    try{
+        getIO().to(recipient.toString()).emit("notification" , notificationData);
+    }catch(err){
+        console.log("Socket Error: ",err);
+    }
+}

@@ -8,6 +8,22 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSocket } from "../context/SocketProvider";
 
+const getNotificationMessage = (notification) => {
+  if (notification.type === 'like') {
+    return notification.comment ? 'liked your comment' : 'liked your video';
+  }
+  if (notification.type === 'comment') {
+    return notification.comment ? 'replied to your comment' : 'commented on your video';
+  }
+  if (notification.type === 'subscribe') {
+    return 'subscribed to your channel';
+  }
+  if (notification.type === 'upload') {
+    return 'uploaded a new video';
+  }
+  return 'interacted with your channel';
+};
+
 export default function NotificationsDropdown() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -128,10 +144,7 @@ export default function NotificationsDropdown() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-gray-900 dark:text-gray-100 leading-snug">
                       <span className="font-medium mr-1">{notification.sender?.channelName}</span>
-                      {notification.type === 'like' && 'liked your video'}
-                      {notification.type === 'comment' && 'commented on your video'}
-                      {notification.type === 'subscribe' && 'subscribed to your channel'}
-                      {notification.type === 'upload' && 'uploaded a new video'}
+                      {getNotificationMessage(notification)}
                     </p>
                     {notification.video && (
                       <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate mt-0.5">

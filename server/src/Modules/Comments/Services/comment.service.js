@@ -1,7 +1,7 @@
 import { CommentModel, CommentReactionModel, NotificationModel, VideoModel } from "../../../DB/Models/index.js"
 import { videoReactionType, videoVisibility } from "../../../Common/index.js"
 import mongoose from "mongoose";
-import { getIO } from "../../../Utils/index.js";
+import { getIO, sendNotification } from "../../../Utils/index.js";
 
 
 
@@ -24,9 +24,11 @@ export const addComment = async(req, res) => {
             mainComment = await CommentModel.findById(parentCommentId);
             if (!mainComment) return res.status(404).json({message: "Comment Not Found"});
         }
+        console.log(parentCommentId);
+        
 
         if(parentCommentId && mainComment.owner.toString() !== user._id.toString()){
-            getIO().to(mainComment.owner.toString()).emit("notification" , {
+            sendNotification(mainComment.owner , {
                 message :`${user.uniqueChannelName} replied to your comment`,
                 type: "comment",
                 sender : user.uniqueChannelName,
@@ -42,7 +44,7 @@ export const addComment = async(req, res) => {
         }
 
         if(!parentCommentId && video.owner.toString() !== user._id.toString()){
-            getIO().to(video.owner.toString()).emit("notification" , {
+            sendNotification(video.owner , {
                 message :`${user.uniqueChannelName} commented on your video "${video.title}"`,
                 type: "comment",
                 sender : user.uniqueChannelName,
@@ -248,6 +250,7 @@ export const reactionToComment = async(req , res)=>{
 
 
     let message;
+    let requireNotification = false
 
     if(existingReaction){
         if(existingReaction.type === type){
@@ -277,7 +280,9 @@ export const reactionToComment = async(req , res)=>{
                 {new:true , session}
             )
             if(!updateCount) throw new Error("Failed to update reaction count")
-
+            if(type === "like" && comment.owner.toString() !== user._id.toString()){
+                requireNotification = true
+            }
             // return res.status(200).json({message:"Reaction updated successfully"})
             message = 'Reaction updated successfully';
         }
@@ -291,10 +296,28 @@ export const reactionToComment = async(req , res)=>{
 
         const updateCount = await CommentModel.findByIdAndUpdate(commentId , {$inc:{[`${type}s`]:1}} , {session}) 
         if(!updateCount) throw new Error("Failed to update reaction count")
-        
+        if(type === "like" && comment.owner.toString() !== user._id.toString()){
+            requireNotification = true
+        }
         message = 'Reaction added successfully';
     }
 
+        if(requireNotification){
+                sendNotification(comment.owner , {
+                    message:`${user.uniqueChannelName} liked your comment`,
+                    type:"like",
+                    sender:user._id,
+                    comment:commentId,
+                    video:comment.video
+                })
+                await NotificationModel.create([{
+                    recipient:comment.owner,
+                    sender:user._id,
+                    type:"like",
+                    comment:commentId,
+                    video:comment.video
+                }] , {session})
+            }
     // return res.status(200).json({message:"Reaction added successfully"})
     await session.commitTransaction();
 

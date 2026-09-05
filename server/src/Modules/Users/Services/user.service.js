@@ -1,6 +1,7 @@
 import { deleteResourceOnCloudinary, uploadImageOnCloudinary } from "../../../Common/index.js"
 import { SubscriptionModel, userModel, VideoModel, CommentModel, VideoReactionModel, VideoViewModel, HistoryModel, NotificationModel } from "../../../DB/Models/index.js"
 import mongoose from  "mongoose"
+import { sendNotification } from "../../../Utils/socket.utils.js"
 
 
 
@@ -30,6 +31,17 @@ export const toggleSubscribe = async (req , res)=>{
         }else{
             await SubscriptionModel.create([{channel:channelId , subscriber:user._id}] , {session})
             await userModel.findByIdAndUpdate(channelId , {$inc:{subscribers:1}}).session(session)
+            sendNotification(channelId , {
+                message :`${user.uniqueChannelName} subscribed to your channel`,
+                type: "subscribe",
+                sender : user.uniqueChannelName,
+            })
+            await NotificationModel.create([{
+                recipient:channelId,
+                type:"subscribe",
+                sender:user._id,
+                message :`${user.uniqueChannelName} subscribed to your channel`,
+            }] , {session})
             message = "Subscribed successfully"
         }
          await session.commitTransaction()
