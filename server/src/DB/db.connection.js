@@ -2,9 +2,9 @@ import mongoose from 'mongoose'
 
 
 
-const dbConnection = ()=>{
+const dbConnection = async()=>{
     try{
-    mongoose.connect("mongodb://localhost:27017/youtube")
+    await mongoose.connect("mongodb+srv://ma7rous1122_db_user:s00K82bcTT3zE8at@cluster0.jmfxhkc.mongodb.net/?appName=Cluster0")
     console.log("Connected to DB");
     
     }catch(err){

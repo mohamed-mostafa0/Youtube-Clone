@@ -85,22 +85,109 @@ const processVideoUpload = async (videoId, files) => {
 }
 
 
+// export const getVideos = async (req, res) => {
+//     const page = parseInt(req.query.page) || 1;
+//     const limit = parseInt(req.query.limit) || 12;
+//     const search = req.query.search || '';
+//     const skip = (page - 1) * limit;
+
+//     const query = { status: "published" };
+    
+//     if (search) {
+//         query.$text = { $search: search };
+//     }
+
+//     let videoQuery = VideoModel.find(query).populate("owner", "channelName logoUrl");
+
+//     if (search) {
+//         videoQuery = videoQuery.sort({ score: { $meta: "textScore" } });
+//     } else {
+//         videoQuery = videoQuery.sort({ createdAt: -1 });
+//     }
+
+//     const videos = await videoQuery.skip(skip).limit(limit);
+
+//     const totalVideos = await VideoModel.countDocuments(query);
+//     const hasNextPage = skip + videos.length < totalVideos;
+//     const nextPage = hasNextPage ? page + 1 : null;
+
+//     return res.status(200).json({ videos, nextPage });
+// }
 export const getVideos = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 12;
+    const search = req.query.search || '';
     const skip = (page - 1) * limit;
 
-    const videos = await VideoModel.find({ status: "published" })
-        .populate("owner", "channelName logoUrl")
-        .skip(skip)
-        .limit(limit);
+    let pipeline = [];
 
-    const totalVideos = await VideoModel.countDocuments({ status: "published" });
-    const hasNextPage = skip + videos.length < totalVideos;
-    const nextPage = hasNextPage ? page + 1 : null;
+    if (search) {
+        pipeline.push({
+            $search: {
+                index: "default",
+                text: {
+                    query: search,
+                    path: ["title", "description"],
+                    fuzzy: {
+                        maxEdits: 2 
+                    }
+                }
+            }
+        });
+    }
 
-    return res.status(200).json({ videos, nextPage });
+    pipeline.push({
+        $match: { status: "published" }
+    });
+
+    if (search) {
+        pipeline.push({ $sort: { score: { $meta: "searchScore" } } });
+    } else {
+        pipeline.push({ $sort: { createdAt: -1 } });
+    }
+
+    pipeline.push({ $skip: skip });
+    pipeline.push({ $limit: limit });
+
+    pipeline.push({
+        $lookup: {
+            from: "users", 
+            localField: "owner",
+            foreignField: "_id",
+            as: "owner"
+        }
+    });
+    pipeline.push({ $unwind: "$owner" });
+    
+    pipeline.push({
+        $addFields: {
+            owner: {
+                _id: "$owner._id",
+                channelName: "$owner.channelName",
+                logoUrl: "$owner.logoUrl"
+            }
+        }
+    });
+
+    console.log(pipeline);
+    
+
+    try {
+        const videos = await VideoModel.aggregate(pipeline);
+
+        const query = { status: "published" };
+        const totalVideos = await VideoModel.countDocuments(query); 
+        
+        const hasNextPage = skip + videos.length < totalVideos;
+        const nextPage = hasNextPage ? page + 1 : null;
+
+        return res.status(200).json({ videos, nextPage });
+    } catch (error) {
+        console.error("Atlas Search Error:", error);
+        return res.status(500).json({ message: "Search failed. Did you create the Atlas Search index?" });
+    }
 }
+
 
 export const getVideo = async (req, res) => {
 

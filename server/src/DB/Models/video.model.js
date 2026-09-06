@@ -59,15 +59,17 @@ const videoSchema = new mongoose.Schema({
     },
     dislikes:{
         type:Number,
-        default:0
+        default: 0
     },
-    commentsAllow:{
-        type:Boolean,
-        default:true
+    commentsAllow: {
+        type: Boolean,
+        default: true
     }
 },
 {
-timestamps:true
-})
+    timestamps: true
+});
 
-export const VideoModel = mongoose.model("Video" , videoSchema)
+videoSchema.index({ title: 'text', description: 'text' });
+
+export const VideoModel = mongoose.model("Video", videoSchema);

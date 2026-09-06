@@ -11,13 +11,23 @@ import ChannelAvatar from "./ChannelAvatar";
 import GoogleLoginButton from "./GoogleLoginButton";
 import { useAuth } from "../context/AuthContext";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import NotificationsDropdown from "./NotificationsDropdown";
 
 
 export default function Header({ onMenuClick }) {
   const { isAuthenticated, user, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const dropdownRef = useRef(null);
+  const router = useRouter();
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/results?search_query=${encodeURIComponent(searchQuery)}`);
+    }
+  };
 
 
 
@@ -53,19 +63,21 @@ export default function Header({ onMenuClick }) {
       </div>
 
       <div className="hidden sm:flex items-center flex-1 max-w-[720px] ml-10 mr-4">
-        <div className="flex items-center w-full">
+        <form onSubmit={handleSearch} className="flex items-center w-full">
           <div className="flex w-full items-center border border-gray-300 dark:border-gray-700 rounded-l-full px-4 py-0.5 bg-white dark:bg-[#121212] focus-within:border-blue-500 focus-within:ml-[-1px] focus-within:pl-[17px]">
             <MdSearch className="w-5 h-5 text-gray-400 hidden group-focus-within:block mr-2" />
             <input
               type="text"
               placeholder="Search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-transparent outline-none h-9 text-gray-900 dark:text-white font-normal"
             />
           </div>
-          <button className="px-5 bg-gray-100 dark:bg-[#222222] border border-l-0 border-gray-300 dark:border-gray-700 rounded-r-full h-[40px] hover:bg-gray-200 dark:hover:bg-[#303030] transition-colors">
+          <button type="submit" className="px-5 bg-gray-100 dark:bg-[#222222] border border-l-0 border-gray-300 dark:border-gray-700 rounded-r-full h-[40px] hover:bg-gray-200 dark:hover:bg-[#303030] transition-colors">
             <MdSearch className="w-6 h-6 text-gray-900 dark:text-gray-100" />
           </button>
-        </div>
+        </form>
         <button className="ml-4 p-2.5 rounded-full bg-gray-100 dark:bg-[#181818] hover:bg-gray-200 dark:hover:bg-[#272727] transition-colors flex-shrink-0">
           <MdMic className="w-5 h-5 text-gray-900 dark:text-gray-100" />
         </button>
