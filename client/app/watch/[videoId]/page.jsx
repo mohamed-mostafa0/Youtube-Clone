@@ -171,10 +171,18 @@ export default function WatchPage() {
           </div>
 
           <div className="bg-gray-100 dark:bg-[#272727] rounded-xl p-3 sm:p-4 hover:bg-gray-200 dark:hover:bg-[#3f3f3f] transition-colors mb-6">
-            <div className="flex gap-2 text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
+            <div className="flex flex-wrap items-center gap-2 text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
               <span>{formatViews(video.views)} views</span>
               <span>•</span>
               <span>{video.createdAt ? formatDistanceToNow(new Date(video.createdAt), { addSuffix: true }) : "Unknown date"}</span>
+              {video.category && (
+                <>
+                  <span>•</span>
+                  <Link href={`/?category=${encodeURIComponent(video.category)}`} className="text-blue-600 dark:text-[#3ea6ff] hover:underline capitalize">
+                    #{video.category}
+                  </Link>
+                </>
+              )}
             </div>
             <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
               {video.description}

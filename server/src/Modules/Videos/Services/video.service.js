@@ -1,5 +1,5 @@
 import { startSession } from "mongoose";
-import { videoReactionType } from "../../../Common/index.js";
+import { videoReactionType, videoCategories } from "../../../Common/index.js";
 import { uploadImageOnCloudinary, uploadVideoOnCloudinary } from "../../../Common/Services/cloudinary.service.js";
 import { HistoryModel, NotificationModel, SubscriptionModel, VideoModel, VideoReactionModel, VideoViewModel } from "../../../DB/Models/index.js";
 import { getIO } from "../../../Utils/index.js";
@@ -17,7 +17,7 @@ export const uploadVideo = async (req, res) => {
     const uploadedVideo = await VideoModel.create({
         title,
         description,
-        category,
+        category: category ? category.toLowerCase().trim() : "gaming",
         visibility,
         commentsAllow,
         owner: _id,
@@ -117,6 +117,7 @@ export const getVideos = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 12;
     const search = req.query.search || '';
+    const category = req.query.category || '';
     const skip = (page - 1) * limit;
 
     let pipeline = [];
@@ -136,8 +137,22 @@ export const getVideos = async (req, res) => {
         });
     }
 
+    const matchConditions = { status: "published" };
+    if (category && category.toLowerCase() !== "all") {
+        const cat = category.trim().toLowerCase();
+        if (cat === "technology" || cat === "tech") {
+            matchConditions.category = { $in: [/^technology$/i, /^tech$/i] };
+        } else if (cat === "vlog" || cat === "vlogs") {
+            matchConditions.category = { $in: [/^vlog$/i, /^vlogs$/i] };
+        } else if (cat === "programming" || cat === "coding") {
+            matchConditions.category = { $in: [/^programming$/i, /^coding$/i, /^technology$/i] };
+        } else {
+            matchConditions.category = { $regex: new RegExp(`^${cat}$`, "i") };
+        }
+    }
+
     pipeline.push({
-        $match: { status: "published" }
+        $match: matchConditions
     });
 
     if (search) {
@@ -169,14 +184,10 @@ export const getVideos = async (req, res) => {
         }
     });
 
-    console.log(pipeline);
-    
-
     try {
         const videos = await VideoModel.aggregate(pipeline);
 
-        const query = { status: "published" };
-        const totalVideos = await VideoModel.countDocuments(query); 
+        const totalVideos = await VideoModel.countDocuments(matchConditions); 
         
         const hasNextPage = skip + videos.length < totalVideos;
         const nextPage = hasNextPage ? page + 1 : null;
@@ -187,6 +198,13 @@ export const getVideos = async (req, res) => {
         return res.status(500).json({ message: "Search failed. Did you create the Atlas Search index?" });
     }
 }
+
+export const getCategories = async (req, res) => {
+    return res.status(200).json({
+        message: "Categories fetched successfully",
+        categories: videoCategories
+    });
+};
 
 
 export const getVideo = async (req, res) => {

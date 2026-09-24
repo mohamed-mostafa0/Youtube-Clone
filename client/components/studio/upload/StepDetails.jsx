@@ -7,11 +7,21 @@ export default function StepDetails({ formik, thumbnailInputRef, handleThumbnail
   const categoryRef = useRef(null);
 
   const categories = [
-    { value: "gaming", label: "gaming" },
-    { value: "music", label: "music" },
-    { value: "education", label: "education" },
-    { value: "vlogs", label: "vlogs" },
-    { value: "tech", label: "tech" },
+    { value: "gaming", label: "Gaming" },
+    { value: "music", label: "Music" },
+    { value: "technology", label: "Technology" },
+    { value: "education", label: "Education" },
+    { value: "entertainment", label: "Entertainment" },
+    { value: "sports", label: "Sports" },
+    { value: "news", label: "News" },
+    { value: "science", label: "Science" },
+    { value: "comedy", label: "Comedy" },
+    { value: "travel", label: "Travel" },
+    { value: "cooking", label: "Cooking" },
+    { value: "fitness", label: "Fitness" },
+    { value: "lifestyle", label: "Lifestyle" },
+    { value: "animation", label: "Animation" },
+    { value: "vlog", label: "Vlog" },
   ];
 
   useEffect(() => {

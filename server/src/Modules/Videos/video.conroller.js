@@ -11,6 +11,7 @@ export const videoController = Router()
 videoController.post("/upload", authenticationMiddleware, upload().fields(
     [{ name: "video", maxCount: 1 }, { name: "thumbnail", maxCount: 1 }]), validationMiddleware(videoSchema), videoServices.uploadVideo)
 videoController.get('/get-videos',videoServices.getVideos)
+videoController.get('/categories', videoServices.getCategories)
 videoController.get('/:videoId', optionalAuthenticationMiddleware, videoServices.getVideo)
 videoController.put('/:videoId/view', optionalAuthenticationMiddleware, videoServices.addView)
 videoController.post('/:videoId/react' , authenticationMiddleware , videoServices.reactionToVideo)

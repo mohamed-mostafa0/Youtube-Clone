@@ -2,12 +2,19 @@ import API from "../axios"
 
 
 
-export const getVideos = ({ pageParam = 1, search = '' } = {}) => {
+export const getVideos = ({ pageParam = 1, search = '', category = '' } = {}) => {
     let url = `/video/get-videos?page=${pageParam}&limit=12`;
     if (search) {
         url += `&search=${encodeURIComponent(search)}`;
     }
+    if (category && category.toLowerCase() !== 'all') {
+        url += `&category=${encodeURIComponent(category.toLowerCase())}`;
+    }
     return API.get(url);
+}
+
+export const getVideoCategories = () => {
+    return API.get('/video/categories');
 }
 
 export const uploadVideo = async (formData) => {

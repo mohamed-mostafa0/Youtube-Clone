@@ -7,6 +7,8 @@ import { formatViews } from "@/helpers/video";
 import {motion} from "framer-motion"
 
 export default function VideoCard({ video , logo , channelName }) {
+  const avatarUrl = video.owner?.logoUrl || logo;
+  const authorName = video.owner?.channelName || channelName;
 
   return (
     <motion.div
@@ -32,8 +34,8 @@ export default function VideoCard({ video , logo , channelName }) {
       <div className="flex gap-3 pr-4 relative mt-3">
         <div className="flex-shrink-0">
           <ChannelAvatar 
-            url={video.owner?.logoUrl } 
-            name={video.owner?.channelName} 
+            url={avatarUrl} 
+            name={authorName} 
             size="md" 
           />
         </div>
@@ -45,7 +47,7 @@ export default function VideoCard({ video , logo , channelName }) {
           
           <div className="text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-1">
             <span className="hover:text-gray-900  dark:hover:text-white transition-colors line-clamp-1">
-              {video.owner?.channelName}
+              {authorName}
             </span>
             {video.verified && (
               <MdCheckCircle className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />

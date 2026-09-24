@@ -37,13 +37,12 @@ export default function Sidebar({ isOpen }) {
   ];
 
   const exploreLinks = [
-    { icon: <MdOutlineExplore className="w-6 h-6" />, label: "Trending" },
-    { icon: <MdOutlineExplore className="w-6 h-6" />, label: "Music" },
-    { icon: <MdOutlineExplore className="w-6 h-6" />, label: "Movies" },
-    { icon: <MdOutlineExplore className="w-6 h-6" />, label: "Live" },
-    { icon: <MdOutlineExplore className="w-6 h-6" />, label: "Gaming" },
-    { icon: <MdOutlineExplore className="w-6 h-6" />, label: "News" },
-    { icon: <MdOutlineExplore className="w-6 h-6" />, label: "Sports" },
+    { icon: <MdOutlineExplore className="w-6 h-6" />, label: "Trending", href: "/" },
+    { icon: <MdOutlineExplore className="w-6 h-6" />, label: "Music", href: "/?category=music" },
+    { icon: <MdOutlineExplore className="w-6 h-6" />, label: "Gaming", href: "/?category=gaming" },
+    { icon: <MdOutlineExplore className="w-6 h-6" />, label: "News", href: "/?category=news" },
+    { icon: <MdOutlineExplore className="w-6 h-6" />, label: "Sports", href: "/?category=sports" },
+    { icon: <MdOutlineExplore className="w-6 h-6" />, label: "Technology", href: "/?category=technology" },
   ];
 
   // const {data:subscribedChannels , isLoading} = useQuery({
@@ -155,19 +154,28 @@ export default function Sidebar({ isOpen }) {
               <h3 className="px-3 py-2 text-base font-semibold text-gray-900 dark:text-gray-100">
                 Explore
               </h3>
-              {exploreLinks.map((link, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center gap-5 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-[#272727]"
-                >
-                  <div className="flex-shrink-0 text-gray-900 dark:text-gray-100">
-                    {link.icon}
-                  </div>
-                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {link.label}
-                  </span>
-                </div>
-              ))}
+              {exploreLinks.map((link, idx) => {
+                const isActive = pathname === "/" && (
+                  (link.href === "/" && !pathname.includes("category")) ||
+                  (link.href.includes("category") && typeof window !== "undefined" && window.location.search.includes(link.href.split("=")[1]))
+                );
+                return (
+                  <Link
+                    key={idx}
+                    href={link.href}
+                    className={`flex items-center gap-5 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-[#272727] transition-colors ${
+                      isActive ? "bg-gray-100 dark:bg-[#272727] font-semibold" : ""
+                    }`}
+                  >
+                    <div className="flex-shrink-0 text-gray-900 dark:text-gray-100">
+                      {link.icon}
+                    </div>
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {link.label}
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
           </>
         )}

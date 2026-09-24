@@ -22,7 +22,7 @@ export const getChannel = async (req, res) => {
     // console.log(channel);
     
 
-    const videos = await VideoModel.find({ owner: channel._id })
+    const videos = await VideoModel.find({ owner: channel._id }).populate("owner", "channelName logoUrl uniqueChannelName")
 
     return res.status(200).json({ message: "Channel fetched successfully", channel, videos })
 }

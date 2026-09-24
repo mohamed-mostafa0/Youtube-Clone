@@ -82,7 +82,7 @@ export const getMyChannel = async(req , res)=>{
     const channel = await userModel.findById(_id)
     if(!channel) return res.status(404).json({message:"Channel not found"})
 
-    const videos = await VideoModel.find({ owner: _id }).sort({ createdAt: -1 })
+    const videos = await VideoModel.find({ owner: _id }).populate("owner", "channelName logoUrl uniqueChannelName").sort({ createdAt: -1 })
 
     return res.status(200).json({
         message:"Channel fetched successfully", 

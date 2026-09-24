@@ -17,11 +17,15 @@ export const allowedFileExtenstions = {
 }
 
 
-export const videoCategories = ["gaming" , "music" , "news" , "technology" , "entertainment" , 
-    "learning" , "travel" , "sports" , "science" , "history" , "cooking" , "fashion" , "beauty"
-     , "fitness" , "health" , "finance" , "business" , "marketing" , "education" ,
-      "food" , "travel" , "lifestyle" , "comedy" , "drama" , "action" , "thriller" ,
-       "horror" , "romance" , "animation" , "documentary" , "short" , "vlog"]
+export const videoCategories = [
+    "gaming", "music", "news", "technology", "entertainment", 
+    "learning", "sports", "science", "history", "cooking", 
+    "fashion", "beauty", "fitness", "health", "finance", 
+    "business", "marketing", "education", "food", "travel", 
+    "lifestyle", "comedy", "drama", "action", "thriller", 
+    "horror", "romance", "animation", "documentary", "short", 
+    "vlog", "tech", "vlogs", "programming"
+];
 
 export const videoVisibility = {
     PUBLIC:"public",

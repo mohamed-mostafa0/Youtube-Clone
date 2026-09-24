@@ -4,11 +4,20 @@ import { categories } from "../data/mockData";
 import { MdChevronLeft, MdChevronRight } from "react-icons/md";
 import { motion } from "framer-motion";
 
-export default function CategoryBar() {
-  const [activeCategory, setActiveCategory] = useState("All");
+export default function CategoryBar({ selectedCategory = "All", onSelectCategory }) {
+  const [internalCategory, setInternalCategory] = useState("All");
   const [scrollAmount, setScrollAmount] = useState(0);
   const [maxScroll, setMaxScroll] = useState(0);
   const containerRef = useRef(null);
+
+  const activeCategory = selectedCategory || internalCategory;
+
+  const handleCategoryClick = (category) => {
+    setInternalCategory(category);
+    if (onSelectCategory) {
+      onSelectCategory(category);
+    }
+  };
 
   useEffect(() => {
     const updateMaxScroll = () => {
@@ -35,7 +44,7 @@ export default function CategoryBar() {
   };
 
   return (
-    <div className="sticky top-0 mb-10 z-10 bg-white dark:bg-[#0f0f0f] w-full border-b border-gray-200 dark:border-gray-800 flex items-center py-3 relative">
+    <div className="sticky top-0 mb-6 z-10 bg-white dark:bg-[#0f0f0f] w-full border-b border-gray-200 dark:border-gray-800 flex items-center py-3 relative">
       
       {scrollAmount > 0 && (
         <div className="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-white via-white dark:from-[#0f0f0f] dark:via-[#0f0f0f] to-transparent w-24 flex items-center justify-start px-4 z-10 pointer-events-none">
@@ -54,19 +63,22 @@ export default function CategoryBar() {
           animate={{ x: -scrollAmount }}
           transition={{ type: "tween", ease: "easeInOut", duration: 0.3 }}
         >
-          {categories.map((category) => (
-            <button
-              key={category}
-              onClick={() => setActiveCategory(category)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                activeCategory === category
-                  ? "bg-black text-white dark:bg-white dark:text-black"
-                  : "bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-[#272727] dark:text-gray-200 dark:hover:bg-[#3f3f3f]"
-              }`}
-            >
-              {category}
-            </button>
-          ))}
+          {categories.map((category) => {
+            const isActive = activeCategory?.toLowerCase() === category.toLowerCase();
+            return (
+              <button
+                key={category}
+                onClick={() => handleCategoryClick(category)}
+                className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer select-none ${
+                  isActive
+                    ? "bg-gray-900 text-white dark:bg-white dark:text-black shadow-sm font-semibold"
+                    : "bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-[#272727] dark:text-gray-200 dark:hover:bg-[#3f3f3f]"
+                }`}
+              >
+                {category}
+              </button>
+            );
+          })}
         </motion.div>
       </div>
 
