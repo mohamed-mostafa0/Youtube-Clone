@@ -318,3 +318,102 @@ export const markNotificationAsRead = async (req, res) => {
 
     return res.status(200).json({ message: "Marked as read successfully" });
 };
+
+export const getChannelAnalytics = async (req, res) => {
+    try {
+        const { user: { _id: userId } } = req.loggedInUser;
+
+        const channel = await userModel.findById(userId).select("channelName uniqueChannelName logoUrl subscribers description").lean();
+        if (!channel) return res.status(404).json({ message: "Channel not found" });
+
+        const videos = await VideoModel.find({ owner: userId }).sort({ createdAt: -1 }).lean();
+        const videoIds = videos.map(v => v._id);
+
+        const totalVideos = videos.length;
+        const totalViews = videos.reduce((sum, v) => sum + (v.views || 0), 0);
+        const totalLikes = videos.reduce((sum, v) => sum + (v.likes || 0), 0);
+        const totalDislikes = videos.reduce((sum, v) => sum + (v.dislikes || 0), 0);
+        const totalComments = await CommentModel.countDocuments({ video: { $in: videoIds } });
+        const subscribersCount = await SubscriptionModel.countDocuments({ channel: userId });
+
+        const totalDurationSeconds = videos.reduce((sum, v) => sum + (v.duration || 0), 0);
+        const estimatedWatchTimeMinutes = totalViews > 0 
+            ? Math.round((totalViews * ((totalDurationSeconds / (totalVideos || 1)) * 0.6)) / 60)
+            : 0;
+
+        const viewsOverTime = await VideoViewModel.aggregate([
+            { $match: { video: { $in: videoIds } } },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                    views: { $sum: 1 }
+                }
+            },
+            { $sort: { _id: 1 } },
+            { $project: { date: "$_id", views: 1, _id: 0 } }
+        ]);
+
+        const subscribersOverTime = await SubscriptionModel.aggregate([
+            { $match: { channel: new mongoose.Types.ObjectId(userId) } },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                    subscribers: { $sum: 1 }
+                }
+            },
+            { $sort: { _id: 1 } },
+            { $project: { date: "$_id", subscribers: 1, _id: 0 } }
+        ]);
+
+        const topVideosRaw = await VideoModel.find({ owner: userId })
+            .sort({ views: -1, likes: -1 })
+            .limit(5)
+            .select("title thumbnailUrl views likes dislikes duration createdAt category")
+            .lean();
+
+        const topVideos = await Promise.all(topVideosRaw.map(async (v) => {
+            const commentsCount = await CommentModel.countDocuments({ video: v._id });
+            return { ...v, commentsCount };
+        }));
+
+        const categoryDistribution = await VideoModel.aggregate([
+            { $match: { owner: new mongoose.Types.ObjectId(userId) } },
+            {
+                $group: {
+                    _id: "$category",
+                    videoCount: { $sum: 1 },
+                    views: { $sum: "$views" },
+                    likes: { $sum: "$likes" }
+                }
+            },
+            { $sort: { views: -1 } },
+            { $project: { category: "$_id", videoCount: 1, views: 1, likes: 1, _id: 0 } }
+        ]);
+
+        return res.status(200).json({
+            message: "Channel analytics fetched successfully",
+            analytics: {
+                channel: {
+                    ...channel,
+                    subscribersCount
+                },
+                summary: {
+                    totalViews,
+                    totalVideos,
+                    totalLikes,
+                    totalDislikes,
+                    totalComments,
+                    subscribersCount,
+                    estimatedWatchTimeMinutes,
+                    averageViewsPerVideo: totalVideos > 0 ? Math.round(totalViews / totalVideos) : 0
+                },
+                viewsOverTime,
+                subscribersOverTime,
+                topVideos,
+                categoryDistribution
+            }
+        });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+};

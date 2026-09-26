@@ -19,6 +19,7 @@ userController.delete("/delete-history" , authenticationMiddleware , userService
 userController.delete("/delete-from-history/:videoId" , authenticationMiddleware , userServices.deleteVideoFromHistory)
 userController.get("/notifications" , authenticationMiddleware , userServices.getNotifications)
 userController.patch("/notifications/:notificationId/read" , authenticationMiddleware , userServices.markNotificationAsRead)
+userController.get("/analytics", authenticationMiddleware, userServices.getChannelAnalytics)
 
 
 

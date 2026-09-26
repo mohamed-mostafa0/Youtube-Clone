@@ -41,3 +41,11 @@ export const addView = (videoId) => {
 export const deleteVideo = (videoId) => {
     return API.delete(`/video/${videoId}`);
 };
+
+export const getChannelAnalytics = () => {
+    return API.get('/user/analytics');
+};
+
+export const getVideoAnalytics = (videoId) => {
+    return API.get(`/video/${videoId}/analytics`);
+};

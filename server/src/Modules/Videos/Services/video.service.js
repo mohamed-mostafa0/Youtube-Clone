@@ -1,7 +1,7 @@
-import { startSession } from "mongoose";
+import mongoose, { startSession } from "mongoose";
 import { videoReactionType, videoCategories } from "../../../Common/index.js";
 import { uploadImageOnCloudinary, uploadVideoOnCloudinary } from "../../../Common/Services/cloudinary.service.js";
-import { HistoryModel, NotificationModel, SubscriptionModel, VideoModel, VideoReactionModel, VideoViewModel } from "../../../DB/Models/index.js";
+import { CommentModel, HistoryModel, NotificationModel, SubscriptionModel, VideoModel, VideoReactionModel, VideoViewModel } from "../../../DB/Models/index.js";
 import { getIO } from "../../../Utils/index.js";
 
 
@@ -388,4 +388,69 @@ export const deleteVideo = async (req, res) => {
 
     return res.status(200).json({ message: "video deleted successfully" })
 }
+
+export const getVideoAnalytics = async (req, res) => {
+    try {
+        const { videoId } = req.params;
+        const { user: { _id: userId } } = req.loggedInUser;
+
+        const video = await VideoModel.findById(videoId).lean();
+        if (!video) return res.status(404).json({ message: "Video not found" });
+
+        if (video.owner.toString() !== userId.toString()) {
+            return res.status(403).json({ message: "You can only view analytics for your own videos" });
+        }
+
+        const commentsCount = await CommentModel.countDocuments({ video: videoId });
+        const viewsCount = video.views || 0;
+        const likesCount = video.likes || 0;
+        const dislikesCount = video.dislikes || 0;
+        const totalReactions = likesCount + dislikesCount;
+        const likeRatio = totalReactions > 0 ? Number(((likesCount / totalReactions) * 100).toFixed(1)) : 100;
+        const estimatedWatchTimeMinutes = Math.round((viewsCount * (video.duration || 120) * 0.6) / 60);
+        const averageViewDurationSeconds = Math.round((video.duration || 120) * 0.6);
+
+        const viewsOverTime = await VideoViewModel.aggregate([
+            { $match: { video: new mongoose.Types.ObjectId(videoId) } },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                    views: { $sum: 1 }
+                }
+            },
+            { $sort: { _id: 1 } },
+            { $project: { date: "$_id", views: 1, _id: 0 } }
+        ]);
+
+        return res.status(200).json({
+            message: "Video analytics fetched successfully",
+            analytics: {
+                video: {
+                    _id: video._id,
+                    title: video.title,
+                    description: video.description,
+                    thumbnailUrl: video.thumbnailUrl,
+                    category: video.category,
+                    duration: video.duration,
+                    createdAt: video.createdAt,
+                    views: viewsCount,
+                    likes: likesCount,
+                    dislikes: dislikesCount
+                },
+                metrics: {
+                    views: viewsCount,
+                    likes: likesCount,
+                    dislikes: dislikesCount,
+                    commentsCount,
+                    likeRatio,
+                    estimatedWatchTimeMinutes,
+                    averageViewDurationSeconds
+                },
+                viewsOverTime
+            }
+        });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+};
 

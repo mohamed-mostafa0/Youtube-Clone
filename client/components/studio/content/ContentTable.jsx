@@ -1,4 +1,5 @@
-import { MdLock, MdVisibility, MdVisibilityOff, MdVideoCall, MdFormatListBulleted, MdDelete } from "react-icons/md";
+import { MdLock, MdVisibility, MdVisibilityOff, MdVideoCall, MdFormatListBulleted, MdDelete, MdBarChart } from "react-icons/md";
+import Link from "next/link";
 import ContentTableLoading from "../upload/ContentTableLoading";
 import { formatDistanceToNow } from "date-fns";
 
@@ -136,13 +137,22 @@ export default function ContentTable({
                   </td>
                   
                   <td className="px-6 py-4 rounded-r-xl border-t border-b border-r border-transparent group-hover:border-gray-100 dark:group-hover:border-[#2a2a2a] text-right">
-                    <button 
-                      onClick={() => onDeleteClick?.(video._id)}
-                      className="p-2  cursor-pointer text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-full transition-all"
-                      title="Delete video"
-                    >
-                      <MdDelete className="w-5 h-5" />
-                    </button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Link 
+                        href={`/studio/analytics?videoId=${video._id}`}
+                        className="p-2 cursor-pointer text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-full transition-all"
+                        title="View video analytics"
+                      >
+                        <MdBarChart className="w-5 h-5" />
+                      </Link>
+                      <button 
+                        onClick={() => onDeleteClick?.(video._id)}
+                        className="p-2 cursor-pointer text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-full transition-all"
+                        title="Delete video"
+                      >
+                        <MdDelete className="w-5 h-5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

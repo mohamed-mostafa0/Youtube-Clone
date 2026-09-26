@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MdEditSquare, MdVideoLibrary } from "react-icons/md";
+import { MdEditSquare, MdVideoLibrary, MdBarChart } from "react-icons/md";
 import { useAuth } from "@/context/AuthContext";
 import StudioProfileLoading from "./StudioProfileLoading";
 
@@ -15,6 +15,11 @@ export default function StudioSidebar({ isOpen }) {
       name: "Content",
       path: "/studio/content",
       icon: <MdVideoLibrary className="w-6 h-6" />
+    },
+    {
+      name: "Analytics",
+      path: "/studio/analytics",
+      icon: <MdBarChart className="w-6 h-6" />
     },
     {
       name: "Customization",
